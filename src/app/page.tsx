@@ -1,103 +1,184 @@
-import Image from "next/image";
+'use client';
+
+import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import {
+  Box,
+  Container,
+  Typography,
+  Button,
+  Stack,
+} from '@mui/material';
+import {
+  Rocket,
+  Analytics,
+  Science,
+  Shield,
+  School,
+  Satellite,
+} from '@mui/icons-material';
 
 export default function Home() {
+  const [, setCurrentFeature] = useState(0);
+  
+  const features = [
+    {
+      title: 'Real-Time Asteroid Tracking',
+      description: 'Monitor near-Earth objects using live NASA data',
+      icon: <Satellite sx={{ fontSize: 48 }} />,
+      link: '/visualization',
+      color: 'primary.main'
+    },
+    {
+      title: 'Impact Simulation',
+      description: 'Model asteroid impacts with scientific accuracy',
+      icon: <Science sx={{ fontSize: 48 }} />,
+      link: '/simulation',
+      color: 'error.main'
+    },
+    {
+      title: 'Deflection Strategies',
+      description: 'Explore methods to protect Earth from threats',
+      icon: <Shield sx={{ fontSize: 48 }} />,
+      link: '/mitigation',
+      color: 'success.main'
+    },
+    {
+      title: 'Educational Resources',
+      description: 'Learn about planetary defense and space science',
+      icon: <School sx={{ fontSize: 48 }} />,
+      link: '/education',
+      color: 'info.main'
+    }
+  ];
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentFeature((prev) => (prev + 1) % features.length);
+    }, 4000);
+    
+    return () => clearInterval(interval);
+  }, [features.length]);
+  
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: 'linear-gradient(180deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%)',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Star field background */}
+      <Box className="star-field" sx={{ position: 'absolute', inset: 0, zIndex: 0 }} />
+      
+      {/* Hero Section */}
+      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, py: 12 }}>
+        <Box textAlign="center">
+          <Typography
+            variant="h1"
+            sx={{
+              fontSize: { xs: '3.5rem', md: '8rem' },
+              fontWeight: 'bold',
+              mb: 3,
+              background: 'linear-gradient(45deg, #3b82f6, #8b5cf6)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent',
+              textShadow: '0 0 30px rgba(59, 130, 246, 0.5)',
+            }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            METEOR
+          </Typography>
+          
+          <Typography
+            variant="h1"
+            sx={{
+              fontSize: { xs: '3.5rem', md: '8rem' },
+              fontWeight: 'bold',
+              mb: 4,
+              background: 'linear-gradient(45deg, #ef4444, #f97316)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent',
+              textShadow: '0 0 30px rgba(239, 68, 68, 0.5)',
+            }}
           >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+            MADNESS
+          </Typography>
+          
+          <Typography
+            variant="h4"
+            sx={{
+              color: 'text.secondary',
+              mb: 6,
+              maxWidth: '800px',
+              mx: 'auto',
+              fontSize: { xs: '1.25rem', md: '2rem' },
+            }}
+          >
+            Defending Earth through science and simulation. Explore asteroid threats,
+            model impact scenarios, and discover mitigation strategies using real NASA and USGS data.
+          </Typography>
+          
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={3}
+            justifyContent="center"
+            sx={{ mb: 8 }}
+          >
+            <Button
+              component={Link}
+              href="/simulation"
+              variant="contained"
+              size="large"
+              startIcon={<Rocket />}
+              sx={{
+                py: 2,
+                px: 4,
+                fontSize: '1.125rem',
+                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #2563eb, #7c3aed)',
+                  transform: 'translateY(-2px)',
+                },
+              }}
+            >
+              Start Simulation
+            </Button>
+            <Button
+              component={Link}
+              href="/visualization"
+              variant="outlined"
+              size="large"
+              startIcon={<Analytics />}
+              sx={{
+                py: 2,
+                px: 4,
+                fontSize: '1.125rem',
+                borderColor: 'rgba(255, 255, 255, 0.3)',
+                color: 'text.primary',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  transform: 'translateY(-2px)',
+                },
+              }}
+            >
+              Explore Data
+            </Button>
+          </Stack>
+          
+          <Box textAlign="center">
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              🏆 2025 NASA Space Apps Challenge
+            </Typography>
+            <Typography variant="caption" color="text.disabled">
+              October 4-5, 2025 • Challenge: Meteor Madness
+            </Typography>
+          </Box>
+        </Box>
+      </Container>
+    </Box>
   );
 }
