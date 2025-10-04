@@ -17,6 +17,8 @@ import {
 import { PlayArrow } from '@mui/icons-material';
 import ParameterSlider from '@/components/ui/ParameterSlider';
 import Globe from '../../components/simulation/globe';
+import MeteorSimulation from '@/components/simulation/MeteorSimulation';
+import type { Viewer } from 'cesium';
 
 export default function SimulationPage() {
   const [asteroidData, setAsteroidData] = useState({
@@ -31,6 +33,8 @@ export default function SimulationPage() {
     craterDiameter: '---',
     affectedArea: '---'
   });
+  const [viewerRef, setViewerRef] = useState<Viewer | null>(null);
+  const [runSim, setRunSim] = useState(false);
 
   const runSimulation = () => {
     // Placeholder for simulation logic
@@ -43,6 +47,9 @@ export default function SimulationPage() {
       craterDiameter: crater,
       affectedArea: area
     });
+    // trigger visual meteor: re-toggle runSim so MeteorSimulation restarts
+    setRunSim(false);
+    setTimeout(() => setRunSim(true), 50);
   };
 
   return (
@@ -140,7 +147,10 @@ export default function SimulationPage() {
                   border: '1px solid rgba(255, 255, 255, 0.1)',
                 }}
               >
-              <Globe />
+                <Globe onViewerReady={(v) => setViewerRef(v)} />
+                {runSim && viewerRef && (
+                  <MeteorSimulation viewer={viewerRef} params={asteroidData} />
+                )}
               </Box>
             </CardContent>
           </Card>

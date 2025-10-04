@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "cesium/Build/Cesium/Widgets/widgets.css";
 import type { Viewer, Cesium3DTileset } from "cesium";
 
@@ -11,8 +11,9 @@ declare global {
   }
 }
 
-export default function Globe() {
+export default function Globe({ onViewerReady }: { onViewerReady?: (viewer: Viewer) => void }) {
   const cesiumContainerRef = useRef<HTMLDivElement>(null);
+  const [viewer, setViewer] = useState<Viewer | null>(null);
 
   useEffect(() => {
     let viewer: Viewer;
@@ -53,11 +54,16 @@ export default function Globe() {
 
       buildingTileset = await Cesium.createOsmBuildingsAsync();
       viewer.scene.primitives.add(buildingTileset);
+
+      // expose viewer
+      setViewer(viewer);
+      onViewerReady?.(viewer);
     });
 
     return () => {
       destroyed = true;
       if (viewer) viewer.destroy();
+      setViewer(null);
     };
   }, []);
 
