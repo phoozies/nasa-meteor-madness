@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import type { Viewer, Cartesian3, SampledPositionProperty, Entity } from "cesium";
+import type { Viewer, Cartesian3, SampledPositionProperty, Entity, JulianDate } from "cesium";
 
 interface MeteorParams {
   size: number;        // meters
@@ -13,11 +13,12 @@ interface MeteorParams {
 interface MeteorSimulationProps {
   viewer: Viewer | null;
   params: MeteorParams;
+  target?: { lon: number; lat: number; height: number } | null;
 }
 
-export default function MeteorSimulation({ viewer, params }: MeteorSimulationProps) {
+export default function MeteorSimulation({ viewer, params, target }: MeteorSimulationProps) {
   useEffect(() => {
-    if (!viewer) return;
+    if (!viewer || !target) return;
 
     let meteorEntity: Entity | undefined;
     let position: SampledPositionProperty | undefined;
@@ -28,30 +29,20 @@ export default function MeteorSimulation({ viewer, params }: MeteorSimulationPro
 
     const runMeteor = async () => {
       const Cesium = await import("cesium");
-
       const { size } = params;
 
-      // Starting position (space entry point)
-      const startPos = Cesium.Cartesian3.fromDegrees(-150, 60, 150000); // 150km up
-      const endPos = Cesium.Cartesian3.fromDegrees(-120, 45, 0); // target on Earth
+      // Starting position: 150 km above target
+      const startPos = Cesium.Cartesian3.fromDegrees(target.lon, target.lat, 150000);
+      const endPos = Cesium.Cartesian3.fromDegrees(target.lon, target.lat, target.height);
 
-      const startTime = Cesium.JulianDate.now();
-      const endTime = Cesium.JulianDate.addSeconds(
-        startTime,
-        8,
-        new Cesium.JulianDate()
-      );
+      const startTime: JulianDate = Cesium.JulianDate.now();
+      const flightDuration = 8; // seconds
+      const endTime: JulianDate = Cesium.JulianDate.addSeconds(startTime, flightDuration, new Cesium.JulianDate());
 
-      // remove any previous meteor/crater/explosion left behind (e.g., React StrictMode double-mount)
-      try {
-        const toRemove: Entity[] = [];
-        viewer.entities.values.forEach((e: any) => {
-          if (e.name === 'Meteor' || e.name === 'Crater' || e.name === 'Explosion') toRemove.push(e);
-        });
-        toRemove.forEach((e) => viewer.entities.remove(e));
-      } catch (e) {
-        // ignore
-      }
+      // Remove previous meteor/crater/explosion
+      viewer.entities.values
+        .filter((e: any) => ["Meteor", "Crater", "Explosion"].includes(e.name))
+        .forEach((e) => viewer.entities.remove(e));
 
       position = new Cesium.SampledPositionProperty();
       position.addSample(startTime, startPos);
@@ -61,7 +52,7 @@ export default function MeteorSimulation({ viewer, params }: MeteorSimulationPro
         name: "Meteor",
         position,
         point: {
-          pixelSize: Math.max(size / 20, 5), // visual representation
+          pixelSize: Math.max(size / 20, 5),
           outlineColor: Cesium.Color.WHITE,
           outlineWidth: 1,
         },
@@ -73,8 +64,71 @@ export default function MeteorSimulation({ viewer, params }: MeteorSimulationPro
         },
       });
 
-      // monitor clock to detect impact
-      const impactTimeRef = { time: undefined as any };
+      // Impact handler
+      const triggerImpact = (cartesianPos: any, carto: any, impactTime: JulianDate) => {
+        try {
+          if (meteorEntity) meteorEntity.show = false;
+
+          const lon = Cesium.Math.toDegrees(carto.longitude);
+          const lat = Cesium.Math.toDegrees(carto.latitude);
+          const groundPos = Cesium.Cartesian3.fromDegrees(lon, lat, target.height);
+          const craterRadius = Math.max(params.size * 0.5, 50);
+
+          // Crater
+          craterEntity = viewer.entities.add({
+            name: "Crater",
+            position: groundPos,
+            ellipse: {
+              semiMajorAxis: craterRadius,
+              semiMinorAxis: craterRadius,
+              height: 0,
+              material: Cesium.Color.BLACK.withAlpha(0.7),
+            },
+          });
+
+          // Explosion
+          explosionEntity = viewer.entities.add({
+            name: "Explosion",
+            position: groundPos,
+            ellipse: {
+              semiMajorAxis: new Cesium.CallbackProperty((time) => {
+                if (!time) return 0;
+                const dt = Cesium.JulianDate.secondsDifference(time, impactTime);
+                if (dt < 0) return 0;
+                return Math.min(craterRadius * 4, dt * 1000);
+              }, false),
+              semiMinorAxis: new Cesium.CallbackProperty((time) => {
+                if (!time) return 0;
+                const dt = Cesium.JulianDate.secondsDifference(time, impactTime);
+                if (dt < 0) return 0;
+                return Math.min(craterRadius * 4, dt * 1000);
+              }, false),
+              height: 0,
+              material: new Cesium.ColorMaterialProperty(new Cesium.CallbackProperty((time) => {
+                if (!time) return Cesium.Color.ORANGE.withAlpha(0);
+                const dt = Cesium.JulianDate.secondsDifference(time, impactTime);
+                const alpha = Math.max(1 - dt / 2, 0);
+                return Cesium.Color.ORANGE.withAlpha(alpha);
+              }, false)),
+            },
+          });
+
+          // Camera focus
+          viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(lon, lat, craterRadius * 6),
+            duration: 1.5,
+          });
+
+          // Remove explosion after a few seconds
+          setTimeout(() => {
+            if (explosionEntity) viewer.entities.remove(explosionEntity);
+          }, 3000);
+        } catch (e) {
+          console.error(e);
+        }
+      };
+
+      // Monitor clock to detect impact
       tickListener = (clock: any) => {
         if (!position || impactTriggered) return;
         const now = viewer.clock.currentTime;
@@ -83,76 +137,15 @@ export default function MeteorSimulation({ viewer, params }: MeteorSimulationPro
         const carto = Cesium.Cartographic.fromCartesian(cart);
         const height = carto.height;
 
-        // trigger impact when near ground (<= 5 meters)
-        if (height <= 5) {
+        if (height <= target.height + 1) { // small threshold
           impactTriggered = true;
-          impactTimeRef.time = now.clone ? now.clone() : now;
-          triggerImpact(cart, carto, impactTimeRef.time);
+          triggerImpact(cart, carto, now);
         }
       };
 
-  viewer.clock.onTick.addEventListener(tickListener);
+      viewer.clock.onTick.addEventListener(tickListener);
 
-      // impact handler
-      const triggerImpact = (cartesianPos: any, carto: any, impactTime: any) => {
-        try {
-          // remove/hide meteor
-          if (meteorEntity) meteorEntity.show = false;
-
-          const lon = Cesium.Math.toDegrees(carto.longitude);
-          const lat = Cesium.Math.toDegrees(carto.latitude);
-          const groundPos = Cesium.Cartesian3.fromDegrees(lon, lat, 0);
-
-          // crater size based on asteroid size (meters)
-          const craterRadius = Math.max(params.size * 0.5, 50);
-
-          // static crater (dark ellipse)
-          craterEntity = viewer.entities.add({
-            name: 'Crater',
-            position: groundPos,
-            ellipse: {
-              semiMajorAxis: craterRadius,
-              semiMinorAxis: craterRadius,
-              height: 0,
-              material: Cesium.Color.BLACK.withAlpha(0.7)
-            }
-          });
-
-          // animated explosion: expanding ellipse with fading color
-          explosionEntity = viewer.entities.add({
-            name: 'Explosion',
-            position: groundPos,
-            ellipse: {
-              semiMajorAxis: new Cesium.CallbackProperty((time: any, result: any) => {
-                const dt = Cesium.JulianDate.secondsDifference(time, impactTime);
-                if (dt < 0) return 0;
-                return Math.min(craterRadius * 4, dt * 1000); // expand quickly
-              }, false),
-              semiMinorAxis: new Cesium.CallbackProperty((time: any, result: any) => {
-                const dt = Cesium.JulianDate.secondsDifference(time, impactTime);
-                if (dt < 0) return 0;
-                return Math.min(craterRadius * 4, dt * 1000);
-              }, false),
-              height: 0,
-              material: new Cesium.ColorMaterialProperty(new Cesium.CallbackProperty((time: any) => {
-                const dt = Cesium.JulianDate.secondsDifference(time, impactTime);
-                const alpha = Math.max(1 - dt / 2, 0);
-                return Cesium.Color.ORANGE.withAlpha(alpha);
-              }, false))
-            }
-          });
-
-          // focus camera on impact
-          viewer.camera.flyTo({ destination: Cesium.Cartesian3.fromDegrees(lon, lat, craterRadius * 6), duration: 1.5 });
-
-          // remove explosion after a few seconds
-          setTimeout(() => {
-            if (explosionEntity) viewer.entities.remove(explosionEntity);
-          }, 3000);
-        } catch (e) {
-          // ignore
-        }
-      };
+      // Clock setup
       viewer.clock.startTime = startTime.clone();
       viewer.clock.stopTime = endTime.clone();
       viewer.clock.currentTime = startTime.clone();
@@ -165,16 +158,12 @@ export default function MeteorSimulation({ viewer, params }: MeteorSimulationPro
     runMeteor();
 
     return () => {
-      try {
-        if (tickListener) viewer.clock.onTick.removeEventListener(tickListener);
-      } catch (e) {}
-      try {
-        if (meteorEntity) viewer.entities.remove(meteorEntity);
-        if (craterEntity) viewer.entities.remove(craterEntity);
-        if (explosionEntity) viewer.entities.remove(explosionEntity);
-      } catch (e) {}
+      try { if (tickListener) viewer.clock.onTick.removeEventListener(tickListener); } catch (e) {}
+      try { if (meteorEntity) viewer.entities.remove(meteorEntity); } catch (e) {}
+      try { if (craterEntity) viewer.entities.remove(craterEntity); } catch (e) {}
+      try { if (explosionEntity) viewer.entities.remove(explosionEntity); } catch (e) {}
     };
-  }, [viewer, params]);
+  }, [viewer, params, target]);
 
   return null;
 }

@@ -4,14 +4,19 @@ import { useEffect, useRef, useState } from "react";
 import "cesium/Build/Cesium/Widgets/widgets.css";
 import type { Viewer, Cesium3DTileset } from "cesium";
 
-// TypeScript: declare window.CESIUM_BASE_URL
 declare global {
   interface Window {
     CESIUM_BASE_URL?: string;
   }
 }
 
-export default function Globe({ onViewerReady }: { onViewerReady?: (viewer: Viewer) => void }) {
+export default function Globe({
+  onViewerReady,
+  onClick,
+}: {
+  onViewerReady?: (viewer: Viewer) => void;
+  onClick?: (pos: { lon: number; lat: number; height: number }) => void;
+}) {
   const cesiumContainerRef = useRef<HTMLDivElement>(null);
   const [viewer, setViewer] = useState<Viewer | null>(null);
 
@@ -19,11 +24,10 @@ export default function Globe({ onViewerReady }: { onViewerReady?: (viewer: View
     let viewer: Viewer;
     let buildingTileset: Cesium3DTileset;
     let destroyed = false;
+    let eventHandler: any = null;
 
-    // Set Cesium base URL
     window.CESIUM_BASE_URL = "/Build/Cesium/";
 
-    // Dynamically import Cesium
     import("cesium").then(async (Cesium) => {
       if (destroyed || !cesiumContainerRef.current) return;
 
@@ -55,13 +59,43 @@ export default function Globe({ onViewerReady }: { onViewerReady?: (viewer: View
       buildingTileset = await Cesium.createOsmBuildingsAsync();
       viewer.scene.primitives.add(buildingTileset);
 
-      // expose viewer
+      try {
+        eventHandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        eventHandler.setInputAction(
+          (click: any) => {
+            if (!onClick) return;
+
+            let pickPos: any;
+            if (viewer.scene.pickPosition) {
+              pickPos = viewer.scene.pickPosition(click.position);
+            } else {
+              pickPos = viewer.camera.pickEllipsoid(
+                click.position,
+                viewer.scene.globe.ellipsoid
+              );
+            }
+
+            if (!pickPos) return;
+
+            const carto = Cesium.Cartographic.fromCartesian(pickPos);
+            const lon = Cesium.Math.toDegrees(carto.longitude);
+            const lat = Cesium.Math.toDegrees(carto.latitude);
+
+            const height = viewer.scene.globe.getHeight(carto) ?? 0;
+
+            onClick({ lon, lat, height });
+          },
+          Cesium.ScreenSpaceEventType.LEFT_CLICK
+        );
+      } catch (e) {}
+
       setViewer(viewer);
       onViewerReady?.(viewer);
     });
 
     return () => {
       destroyed = true;
+      try { if (eventHandler) eventHandler.destroy(); } catch (e) {}
       if (viewer) viewer.destroy();
       setViewer(null);
     };
