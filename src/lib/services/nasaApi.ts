@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // NASA API configuration
 const NASA_API_BASE = 'https://api.nasa.gov';
-const API_KEY = process.env.NEXT_PUBLIC_NASA_API_KEY || 'DEMO_KEY';
+const API_KEY = process.env.NASA_API_KEY || 'DEMO_KEY';
 
 // Types for NASA NEO API responses
 export interface NeoData {
