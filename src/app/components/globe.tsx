@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import "cesium/Build/Cesium/Widgets/widgets.css";
+import type { Viewer, Cesium3DTileset } from "cesium";
 
 // TypeScript: declare window.CESIUM_BASE_URL
 declare global {
@@ -14,8 +15,8 @@ export default function Globe() {
   const cesiumContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let viewer: any;
-    let buildingTileset: any;
+    let viewer: Viewer;
+    let buildingTileset: Cesium3DTileset;
     let destroyed = false;
 
     // Set Cesium base URL
