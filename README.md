@@ -1,4 +1,4 @@
-# nasa-embiggen-your-eyes
+# nasa-meteor-madness
 NASA space apps challenge
 
 ```bash
