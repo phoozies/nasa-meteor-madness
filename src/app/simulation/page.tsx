@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import { PlayArrow } from '@mui/icons-material';
 import ParameterSlider from '@/components/ui/ParameterSlider';
-import Globe from '../components/globe';
+import Globe from '../../components/simulation/globe';
 
 export default function SimulationPage() {
   const [asteroidData, setAsteroidData] = useState({
