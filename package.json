@@ -12,6 +12,7 @@
     "@react-three/drei": "^10.7.6",
     "@react-three/fiber": "^9.3.0",
     "axios": "^1.12.2",
+    "cesium": "^1.134.0",
     "d3": "^7.9.0",
     "leaflet": "^1.9.4",
     "next": "15.5.4",
