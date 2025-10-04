@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import { PlayArrow } from '@mui/icons-material';
 import ParameterSlider from '@/components/ui/ParameterSlider';
+import Globe from '../components/globe';
 
 export default function SimulationPage() {
   const [asteroidData, setAsteroidData] = useState({
@@ -139,9 +140,7 @@ export default function SimulationPage() {
                   border: '1px solid rgba(255, 255, 255, 0.1)',
                 }}
               >
-                <Typography color="text.secondary">
-                  3D Visualization will be rendered here
-                </Typography>
+              <Globe />
               </Box>
             </CardContent>
           </Card>
