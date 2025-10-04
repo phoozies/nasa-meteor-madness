@@ -27,12 +27,30 @@ export default function ParameterSlider({
   };
 
   return (
-    <Box sx={{ mb: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+    <Box sx={{ mb: 4 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography 
+          variant="body1" 
+          sx={{ 
+            fontWeight: 600, 
+            color: '#212529',
+            fontFamily: '"Source Sans Pro", sans-serif',
+          }}
+        >
           {label}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography 
+          variant="body1" 
+          sx={{ 
+            fontWeight: 700,
+            color: '#0B3D91',
+            backgroundColor: '#f8f9fa',
+            px: 2,
+            py: 0.5,
+            borderRadius: 1,
+            border: '1px solid #dee2e6',
+          }}
+        >
           {value}{unit}
         </Typography>
       </Box>
@@ -45,20 +63,36 @@ export default function ParameterSlider({
         onChange={handleChange}
         valueLabelDisplay="auto"
         valueLabelFormat={(val) => `${val}${unit}`}
-        sx={{ mb: 1 }}
+        sx={{ 
+          mb: 2,
+          '& .MuiSlider-valueLabel': {
+            backgroundColor: '#0B3D91',
+            color: '#ffffff',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+          },
+        }}
       />
       
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: description ? 1 : 0 }}>
-        <Typography variant="caption" color="text.secondary">
-          {min}{unit}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: description ? 2 : 0 }}>
+        <Typography variant="caption" sx={{ color: '#6c757d', fontSize: '0.75rem' }}>
+          Min: {min}{unit}
         </Typography>
-        <Typography variant="caption" color="text.secondary">
-          {max}{unit}
+        <Typography variant="caption" sx={{ color: '#6c757d', fontSize: '0.75rem' }}>
+          Max: {max}{unit}
         </Typography>
       </Box>
       
       {description && (
-        <Typography variant="caption" color="text.secondary">
+        <Typography 
+          variant="body2" 
+          sx={{ 
+            color: '#6c757d',
+            fontSize: '0.875rem',
+            lineHeight: 1.4,
+            fontStyle: 'italic',
+          }}
+        >
           {description}
         </Typography>
       )}

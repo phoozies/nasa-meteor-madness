@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Source_Sans_3 } from "next/font/google";
 import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import Navigation from "@/components/layout/Navigation";
@@ -7,9 +7,12 @@ import { theme } from '@/lib/theme';
 import "./globals.css";
 import "../styles/visualizations.css";
 
-const inter = Inter({
+// NASA recommended fonts - Source Sans Pro for UI text
+const sourceSans = Source_Sans_3({
   subsets: ["latin"],
   display: 'swap',
+  variable: '--font-source-sans',
+  weight: ['300', '400', '600', '700'],
 });
 
 export const metadata: Metadata = {
@@ -24,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={sourceSans.className}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <Navigation />
