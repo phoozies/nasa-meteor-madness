@@ -143,7 +143,7 @@ export default function Navigation() {
                 {/* Custom Meteor Madness Logo */}
                 <Box
                   component="img"
-                  src="/meteor-madness-logo.png"
+                  src="/Meteor_madness.png"
                   alt="Meteor Madness Logo"
                   sx={{
                     width: 48,
