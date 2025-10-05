@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'invalid payload' }, { status: 400 });
     }
 
-    const { E, MtTNT } = impactEnergy(body.diameter_m, body.density, body.speed_ms);
+    const { MtTNT } = impactEnergy(body.diameter_m, body.density, body.speed_ms);
     
     // Detect if impact is over water or land
     const isWater = isOverWater(body.lon, body.lat);
@@ -120,12 +120,6 @@ export async function POST(req: NextRequest) {
 
     // Calculate wind speed zones (based on overpressure)
     // 10 psi ≈ 470 mph, 5 psi ≈ 300 mph, 3 psi ≈ 190 mph, 1 psi ≈ 100 mph
-    const windZones = {
-      extreme: over.p10, // >470 mph
-      severe: over.p5,   // >300 mph
-      moderate: over.p3, // >190 mph
-      light: over.p1     // >100 mph
-    };
 
     let lon = body.lon;
     let lat = body.lat;
