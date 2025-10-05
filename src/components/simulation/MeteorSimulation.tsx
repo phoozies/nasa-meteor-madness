@@ -206,7 +206,7 @@ export default function MeteorSimulation({ viewer, params, target, start, bearin
 
           // Camera focus on impact area with better positioning
           viewer.camera.flyTo({
-            destination: Cesium.Cartesian3.fromDegrees(lon, lat - 0.3, Math.max(craterRadius * 20, 20000)),
+            destination: Cesium.Cartesian3.fromDegrees(lon, lat - 2, Math.max(craterRadius * 20, 20000)),
             duration: 2.0,
             orientation: {
               heading: Cesium.Math.toRadians(0.0),
@@ -290,7 +290,7 @@ export default function MeteorSimulation({ viewer, params, target, start, bearin
 
       // Position camera to see both meteor approach and impact
       viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(target.lon, target.lat - 2, 500000), // Closer view
+        destination: Cesium.Cartesian3.fromDegrees(target.lon, target.lat - 3, 500000), // Closer view
         duration: 1.0,
         orientation: {
           heading: Cesium.Math.toRadians(0.0),
