@@ -15,7 +15,7 @@ import {
   MenuItem,
   useTheme,
 } from '@mui/material';
-import { PlayArrow, Science } from '@mui/icons-material';
+import { PlayArrow } from '@mui/icons-material';
 import ParameterSlider from '@/components/ui/ParameterSlider';
 import Globe from '../../components/simulation/globe';
 
@@ -49,36 +49,6 @@ export default function SimulationPage() {
 
   return (
     <Box sx={{ backgroundColor: theme.palette.background.default, minHeight: '100vh' }}>
-      {/* Page Header */}
-      <Box sx={{ backgroundColor: theme.palette.background.paper, py: 4, borderBottom: `1px solid ${theme.palette.divider}` }}>
-        <Container maxWidth="lg">
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Science sx={{ fontSize: 32, color: theme.palette.primary.main, mr: 2 }} />
-            <Typography 
-              variant="h1" 
-              sx={{ 
-                fontSize: '2.5rem',
-                fontWeight: 700,
-                color: theme.palette.primary.main,
-                fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
-              }}
-            >
-              Asteroid Impact Simulation
-            </Typography>
-          </Box>
-          <Typography
-            variant="body1"
-            sx={{
-              color: theme.palette.text.secondary,
-              maxWidth: '66ch',
-            }}
-          >
-            Model asteroid impacts with scientific accuracy using validated physics models
-            and real-world parameters to assess potential threats and damage patterns.
-          </Typography>
-        </Container>
-      </Box>
-
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Grid container spacing={4}>
           {/* Controls Panel */}
