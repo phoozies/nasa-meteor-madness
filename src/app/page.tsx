@@ -16,9 +16,13 @@ import {
 export default function Home() {
   
   return (
-    <Box sx={{ backgroundColor: '#ffffff' }}>
-      {/* Hero Section - Clean NASA style */}
-      <Box sx={{ backgroundColor: '#f8f9fa', py: 8 }}>
+    <Box sx={{ 
+      backgroundColor: '#f8f9fa', 
+      height: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      overflow: 'hidden'
+    }}>
         <Container maxWidth="lg">
           <Box textAlign="center">
             <Typography
@@ -88,7 +92,6 @@ export default function Home() {
             </Stack>
           </Box>
         </Container>
-      </Box>
     </Box>
   );
 }
