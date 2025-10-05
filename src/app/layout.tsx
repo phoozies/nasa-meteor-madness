@@ -18,6 +18,19 @@ const sourceSans = Source_Sans_3({
 export const metadata: Metadata = {
   title: "Meteor Madness - NASA Space Apps Challenge 2025",
   description: "Interactive asteroid impact simulation and visualization tool for planetary defense education and risk assessment.",
+  icons: {
+    icon: [
+      {
+        url: '/meteor-madness-logo.svg',
+        type: 'image/svg+xml',
+      },
+    ],
+    shortcut: '/meteor-madness-logo.svg',
+  },
+  keywords: ['NASA', 'asteroid', 'meteor', 'impact simulation', 'planetary defense', 'space apps challenge'],
+  authors: [{ name: 'NASA Space Apps Challenge Team' }],
+  creator: 'Error Terrors',
+  publisher: 'NASA Space Apps Challenge',
 };
 
 export default function RootLayout({
