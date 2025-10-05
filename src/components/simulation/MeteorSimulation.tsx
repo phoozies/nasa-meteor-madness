@@ -151,9 +151,10 @@ export default function MeteorSimulation({ viewer, params, target, start, bearin
               semiMinorAxis: Math.max(craterRadius * 4, 500),
               height: target.height + 2, // Above ground for visibility
               extrudedHeight: target.height - 100, // Deeper crater
-              material: Cesium.Color.DARKRED.withAlpha(0.9),
+              // Make crater slightly transparent for better blending with terrain
+              material: Cesium.Color.DARKRED.withAlpha(0.3),
               outline: true,
-              outlineColor: Cesium.Color.RED.withAlpha(1.0),
+              outlineColor: Cesium.Color.RED.withAlpha(0.8),
               outlineWidth: 3,
             },
           });
