@@ -46,6 +46,14 @@ export default function SimulationPage() {
     windSpeed: '---',
   });
 
+  // Detailed statistics from API
+  const [detailedStats, setDetailedStats] = useState<{
+    crater: string[];
+    shockwave: string[];
+    windBlast: string[];
+    seismic: string[];
+  } | null>(null);
+
   // State for 2D map mode
   const [impactPoint, setImpactPoint] = useState<{ lon: number; lat: number } | null>(null);
   const [geojsonRings, setGeojsonRings] = useState<
@@ -70,7 +78,7 @@ export default function SimulationPage() {
         asteroidData.composition === 'metallic' ? 'iron' :
         asteroidData.composition === 'icy' ? 'cometary' : 'stony';
 
-      const density = material === 'iron' ? 7800 : material === 'cometary' ? 600 : 3000;
+      const density = material === 'iron' ? 7800 : material === 'cometary' ? 600 : 2600;
 
       const payload = {
         diameter_m: asteroidData.size,
@@ -106,6 +114,11 @@ export default function SimulationPage() {
           seismicMagnitude: data.seismic_magnitude ? data.seismic_magnitude.toFixed(1) : '---',
           windSpeed: '~470', // From extreme blast zone
         });
+        
+        // Store detailed statistics
+        if (data.detailed_stats) {
+          setDetailedStats(data.detailed_stats);
+        }
       } finally {
         setLoading(false);
       }
@@ -361,6 +374,81 @@ export default function SimulationPage() {
           </Card>
         </Grid>
       </Grid>
+      
+      {/* Detailed Statistics Panel (shown when detailed stats are available) */}
+      {detailedStats && (
+        <Grid container spacing={3} sx={{ mt: 4 }}>
+          <Grid size={{ xs: 12 }}>
+            <Typography variant="h4" gutterBottom sx={{ textAlign: 'center', mb: 3 }}>
+              Detailed Impact Analysis
+            </Typography>
+          </Grid>
+          
+          {/* Crater Effects */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h5" gutterBottom sx={{ color: 'primary.main', mb: 2 }}>
+                  🌑 Crater Effects
+                </Typography>
+                {detailedStats.crater.map((stat, idx) => (
+                  <Typography key={idx} variant="body1" sx={{ mb: 1, lineHeight: 1.7 }}>
+                    • {stat}
+                  </Typography>
+                ))}
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          {/* Shock Wave Effects */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h5" gutterBottom sx={{ color: 'error.main', mb: 2 }}>
+                  💥 Shock Wave Effects
+                </Typography>
+                {detailedStats.shockwave.map((stat, idx) => (
+                  <Typography key={idx} variant="body1" sx={{ mb: 1, lineHeight: 1.7 }}>
+                    • {stat}
+                  </Typography>
+                ))}
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          {/* Wind Blast Effects */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h5" gutterBottom sx={{ color: 'warning.main', mb: 2 }}>
+                  🌪️ Wind Blast Effects
+                </Typography>
+                {detailedStats.windBlast.map((stat, idx) => (
+                  <Typography key={idx} variant="body1" sx={{ mb: 1, lineHeight: 1.7 }}>
+                    • {stat}
+                  </Typography>
+                ))}
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          {/* Seismic Effects */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h5" gutterBottom sx={{ color: 'secondary.main', mb: 2 }}>
+                  🌍 Seismic Effects
+                </Typography>
+                {detailedStats.seismic.map((stat, idx) => (
+                  <Typography key={idx} variant="body1" sx={{ mb: 1, lineHeight: 1.7 }}>
+                    • {stat}
+                  </Typography>
+                ))}
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      )}
     </Container>
   );
 }
