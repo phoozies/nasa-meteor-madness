@@ -13,12 +13,14 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  useTheme,
 } from '@mui/material';
 import { PlayArrow, Science } from '@mui/icons-material';
 import ParameterSlider from '@/components/ui/ParameterSlider';
 import Globe from '../../components/simulation/globe';
 
 export default function SimulationPage() {
+  const theme = useTheme();
   const [asteroidData, setAsteroidData] = useState({
     size: 100, // meters
     velocity: 20, // km/s
@@ -46,18 +48,18 @@ export default function SimulationPage() {
   };
 
   return (
-    <Box sx={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+    <Box sx={{ backgroundColor: theme.palette.background.default, minHeight: '100vh' }}>
       {/* Page Header */}
-      <Box sx={{ backgroundColor: '#ffffff', py: 4, borderBottom: '1px solid #dee2e6' }}>
+      <Box sx={{ backgroundColor: theme.palette.background.paper, py: 4, borderBottom: `1px solid ${theme.palette.divider}` }}>
         <Container maxWidth="lg">
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Science sx={{ fontSize: 32, color: '#0B3D91', mr: 2 }} />
+            <Science sx={{ fontSize: 32, color: theme.palette.primary.main, mr: 2 }} />
             <Typography 
               variant="h1" 
               sx={{ 
                 fontSize: '2.5rem',
                 fontWeight: 700,
-                color: '#0B3D91',
+                color: theme.palette.primary.main,
                 fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
               }}
             >
@@ -67,7 +69,7 @@ export default function SimulationPage() {
           <Typography
             variant="body1"
             sx={{
-              color: '#6c757d',
+              color: theme.palette.text.secondary,
               maxWidth: '66ch',
             }}
           >
@@ -167,7 +169,7 @@ export default function SimulationPage() {
                     fontSize: '1.5rem', 
                     fontWeight: 600, 
                     mb: 3,
-                    color: '#212529',
+                    color: theme.palette.text.primary,
                   }}
                 >
                   Impact Visualization
@@ -175,9 +177,9 @@ export default function SimulationPage() {
                 <Box
                   sx={{
                     height: 'calc(100% - 60px)',
-                    backgroundColor: '#f8f9fa',
+                    backgroundColor: theme.palette.background.paper,
                     borderRadius: 2,
-                    border: '2px solid #dee2e6',
+                    border: `2px solid ${theme.palette.divider}`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',

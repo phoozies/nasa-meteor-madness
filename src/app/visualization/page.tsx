@@ -19,6 +19,7 @@ import {
   Slider,
   Stack,
   Chip,
+  useTheme,
 } from '@mui/material';
 import {
   Download,
@@ -28,6 +29,7 @@ import {
 } from '@mui/icons-material';
 
 export default function VisualizationPage() {
+  const theme = useTheme();
   const [selectedDataset, setSelectedDataset] = useState('neo');
   const [viewMode, setViewMode] = useState('map');
   const [magnitude, setMagnitude] = useState([0, 10]);
@@ -131,13 +133,13 @@ export default function VisualizationPage() {
               <Box
                 sx={{
                   height: 'calc(100% - 16px)',
-                  background: 'linear-gradient(135deg, #1f2937, #374151)',
+                  backgroundColor: theme.palette.background.paper,
                   borderRadius: 1,
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  border: `1px solid ${theme.palette.divider}`,
                   textAlign: 'center',
                 }}
               >

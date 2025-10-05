@@ -16,6 +16,7 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
+  useTheme,
 } from '@mui/material';
 import {
   CheckCircle,
@@ -30,6 +31,7 @@ import ParameterSlider from '@/components/ui/ParameterSlider';
 type StrategyKey = 'kinetic' | 'gravity' | 'laser' | 'nuclear';
 
 export default function MitigationPage() {
+  const theme = useTheme();
   const [selectedStrategy, setSelectedStrategy] = useState<StrategyKey>('kinetic');
   const [scenario, setScenario] = useState({
     asteroidSize: 200,
@@ -263,12 +265,12 @@ export default function MitigationPage() {
                 <Box
                   sx={{
                     height: 250,
-                    background: 'linear-gradient(135deg, #1f2937, #374151)',
+                    backgroundColor: theme.palette.background.paper,
                     borderRadius: 1,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    border: `1px solid ${theme.palette.divider}`,
                   }}
                 >
                   <Typography color="text.secondary">

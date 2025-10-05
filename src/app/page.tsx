@@ -7,6 +7,7 @@ import {
   Typography,
   Button,
   Stack,
+  useTheme,
 } from '@mui/material';
 import {
   Rocket,
@@ -14,10 +15,11 @@ import {
 } from '@mui/icons-material';
 
 export default function Home() {
+  const theme = useTheme();
   
   return (
     <Box sx={{ 
-      backgroundColor: '#f8f9fa', 
+      backgroundColor: theme.palette.background.paper, 
       height: '100vh',
       display: 'flex',
       alignItems: 'center',
@@ -30,7 +32,7 @@ export default function Home() {
               sx={{
                 fontSize: { xs: '2.5rem', md: '3.5rem' },
                 fontWeight: 700,
-                color: '#0B3D91',
+                color: theme.palette.primary.main,
                 mb: 2,
                 fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
               }}
@@ -43,7 +45,7 @@ export default function Home() {
               sx={{
                 fontSize: { xs: '1.25rem', md: '1.5rem' },
                 fontWeight: 400,
-                color: '#6c757d',
+                color: theme.palette.text.secondary,
                 mb: 4,
                 maxWidth: '66ch',
                 mx: 'auto',

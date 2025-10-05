@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Source_Sans_3 } from "next/font/google";
-import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import Navigation from "@/components/layout/Navigation";
-import { theme } from '@/lib/theme';
+import { ThemeModeProvider } from '@/contexts/ThemeContext';
+import { AppThemeProvider } from '@/components/providers/AppThemeProvider';
 import "./globals.css";
 import "../styles/visualizations.css";
 
@@ -28,11 +28,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={sourceSans.className}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <Navigation />
-          {children}
-        </ThemeProvider>
+        <ThemeModeProvider>
+          <AppThemeProvider>
+            <CssBaseline />
+            <Navigation />
+            {children}
+          </AppThemeProvider>
+        </ThemeModeProvider>
       </body>
     </html>
   );

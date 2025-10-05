@@ -18,17 +18,22 @@ import {
   useTheme,
   useMediaQuery,
   Container,
+  Tooltip,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
   Close as CloseIcon,
+  LightMode as LightModeIcon,
+  DarkMode as DarkModeIcon,
 } from '@mui/icons-material';
+import { useThemeMode } from '@/contexts/ThemeContext';
 
 export default function Navigation() {
   const pathname = usePathname();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { darkMode, toggleDarkMode } = useThemeMode();
   
   // Simplified navigation following NASA guidelines - focus on core functionality
   const navItems = [
@@ -91,6 +96,31 @@ export default function Navigation() {
             </ListItemButton>
           </ListItem>
         ))}
+        
+        {/* Mobile Theme Toggle */}
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={toggleDarkMode}
+            sx={{
+              py: 1.5,
+              px: 3,
+              '&:hover': {
+                backgroundColor: 'rgba(11, 61, 145, 0.04)',
+              },
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+              {darkMode ? <LightModeIcon sx={{ mr: 2, color: '#0B3D91' }} /> : <DarkModeIcon sx={{ mr: 2, color: '#0B3D91' }} />}
+              <ListItemText 
+                primary={darkMode ? 'Light Mode' : 'Dark Mode'} 
+                primaryTypographyProps={{
+                  fontWeight: 400,
+                  color: '#212529',
+                }}
+              />
+            </Box>
+          </ListItemButton>
+        </ListItem>
       </List>
     </Drawer>
   );
@@ -144,7 +174,7 @@ export default function Navigation() {
             
             {/* Desktop Navigation - Clean, minimal */}
             {!isMobile && (
-              <Box sx={{ display: 'flex', gap: 0 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0 }}>
                 {navItems.map((item) => (
                   <Button
                     key={item.href}
@@ -168,20 +198,54 @@ export default function Navigation() {
                     {item.label}
                   </Button>
                 ))}
+                
+                {/* Theme Toggle Button */}
+                <Tooltip title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}>
+                  <IconButton
+                    onClick={toggleDarkMode}
+                    sx={{
+                      color: '#ffffff',
+                      ml: 2,
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      },
+                    }}
+                  >
+                    {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
+                  </IconButton>
+                </Tooltip>
               </Box>
             )}
             
-            {/* Mobile menu toggle */}
+            {/* Mobile controls */}
             {isMobile && (
-              <IconButton
-                color="inherit"
-                aria-label="open navigation menu"
-                edge="end"
-                onClick={handleMobileMenuToggle}
-                sx={{ color: '#ffffff' }}
-              >
-                <MenuIcon />
-              </IconButton>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {/* Mobile Theme Toggle */}
+                <Tooltip title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}>
+                  <IconButton
+                    onClick={toggleDarkMode}
+                    sx={{
+                      color: '#ffffff',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      },
+                    }}
+                  >
+                    {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
+                  </IconButton>
+                </Tooltip>
+                
+                {/* Mobile menu toggle */}
+                <IconButton
+                  color="inherit"
+                  aria-label="open navigation menu"
+                  edge="end"
+                  onClick={handleMobileMenuToggle}
+                  sx={{ color: '#ffffff' }}
+                >
+                  <MenuIcon />
+                </IconButton>
+              </Box>
             )}
           </Toolbar>
         </Container>
