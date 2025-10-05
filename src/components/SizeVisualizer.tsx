@@ -48,7 +48,6 @@ type VisObject = {
   emoji?: string;
   imageUrl?: string;
   path?: string; // SVG path data for silhouette
-  is_hazardous?: boolean; // For NEOs
 };
 
 export default function SizeVisualizer() {
@@ -150,7 +149,6 @@ export default function SizeVisualizer() {
           diameter_m: neo.diameter_m,
           color: neo.is_hazardous ? '#dc2626' : '#f97316',
           type: 'neo',
-          is_hazardous: neo.is_hazardous,
         });
       }
     });
@@ -189,25 +187,10 @@ export default function SizeVisualizer() {
   return (
     <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, height: '100%' }}>
       {/* Left Controls */}
-      <Box sx={{ width: { xs: '100%', md: 500 }, flexShrink: 0 }}>
-        <Card sx={{ 
-          height: '100%',
-          background: 'rgba(255, 255, 255, 0.05)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-        }}>
+      <Box sx={{ width: { xs: '100%', md: 350 }, flexShrink: 0 }}>
+        <Card sx={{ height: '100%' }}>
           <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 3, height: '100%', overflow: 'auto' }}>
-            <Typography 
-              variant="h6" 
-              gutterBottom
-              sx={{
-                background: 'linear-gradient(135deg, #a6e3ff 0%, #ffffff 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                fontWeight: 600,
-              }}
-            >
+            <Typography variant="h6" gutterBottom>
               Controls
             </Typography>
 
@@ -229,20 +212,6 @@ export default function SizeVisualizer() {
                   { value: 1000, label: '1km' },
                   { value: 2000, label: '2km' },
                 ]}
-                sx={{
-                  '& .MuiSlider-track': {
-                    background: 'linear-gradient(90deg, #3b82f6 0%, #2563eb 100%)',
-                  },
-                  '& .MuiSlider-thumb': {
-                    backgroundColor: '#3b82f6',
-                    '&:hover, &.Mui-focusVisible': {
-                      boxShadow: '0 0 0 8px rgba(59, 130, 246, 0.16)',
-                    },
-                  },
-                  '& .MuiSlider-rail': {
-                    opacity: 0.3,
-                  },
-                }}
               />
               <TextField
                 type="number"
@@ -271,20 +240,6 @@ export default function SizeVisualizer() {
                   { value: 1, label: '1×' },
                   { value: 5, label: '5×' },
                 ]}
-                sx={{
-                  '& .MuiSlider-track': {
-                    background: 'linear-gradient(90deg, #3b82f6 0%, #2563eb 100%)',
-                  },
-                  '& .MuiSlider-thumb': {
-                    backgroundColor: '#3b82f6',
-                    '&:hover, &.Mui-focusVisible': {
-                      boxShadow: '0 0 0 8px rgba(59, 130, 246, 0.16)',
-                    },
-                  },
-                  '& .MuiSlider-rail': {
-                    opacity: 0.3,
-                  },
-                }}
               />
             </Box>
 
@@ -299,15 +254,6 @@ export default function SizeVisualizer() {
                 disabled={loading}
                 fullWidth
                 startIcon={loading ? <CircularProgress size={20} /> : null}
-                sx={{
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%)',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 8px 20px rgba(59, 130, 246, 0.4)',
-                  },
-                  transition: 'all 0.3s ease',
-                }}
               >
                 {loading ? 'Fetching...' : 'Fetch NEOs'}
               </Button>
@@ -368,21 +314,8 @@ export default function SizeVisualizer() {
             </Box>
 
             {/* Legend */}
-            <Paper 
-              variant="outlined" 
-              sx={{ 
-                p: 2,
-                background: 'rgba(166, 227, 255, 0.05)',
-                backdropFilter: 'blur(5px)',
-                border: '1px solid rgba(166, 227, 255, 0.2)',
-              }}
-            >
-              <Typography 
-                variant="body2" 
-                fontWeight={600} 
-                gutterBottom
-                sx={{ color: 'rgba(255, 255, 255, 0.9)' }}
-              >
+            <Paper variant="outlined" sx={{ p: 2 }}>
+              <Typography variant="body2" fontWeight={600} gutterBottom>
                 Legend
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
@@ -410,14 +343,7 @@ export default function SizeVisualizer() {
 
       {/* Right Canvas */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <Card sx={{ 
-          flex: 1, 
-          minHeight: 500,
-          background: 'rgba(255, 255, 255, 0.03)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-        }}>
+        <Card sx={{ flex: 1, minHeight: 500 }}>
           <CardContent ref={canvasRef} sx={{ height: '100%', p: 0 }}>
             {objectsToRender.length === 0 ? (
               <Box
@@ -426,7 +352,7 @@ export default function SizeVisualizer() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'rgba(255, 255, 255, 0.6)',
+                  color: 'text.secondary',
                 }}
               >
                 <Typography>
@@ -435,24 +361,6 @@ export default function SizeVisualizer() {
               </Box>
             ) : (
               <svg width="100%" height="100%" viewBox={`0 0 ${width} ${height}`}>
-                {/* Define glow filters */}
-                <defs>
-                  <filter id="glow-blue" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-                    <feMerge>
-                      <feMergeNode in="coloredBlur"/>
-                      <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                  </filter>
-                  <filter id="glow-red" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
-                    <feMerge>
-                      <feMergeNode in="coloredBlur"/>
-                      <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                  </filter>
-                </defs>
-                
                 <g transform={`translate(${width / 2}, ${height / 2})`}>
                   {objectsToRender.map((obj) => {
                     const radius = rScale(obj.diameter_m / 2);
@@ -461,7 +369,7 @@ export default function SizeVisualizer() {
                     return (
                       <g key={obj.id}>
                         {isAsteroid ? (
-                          // Render asteroids as circles with glow
+                          // Render asteroids as circles
                           <Tooltip title={`${obj.label}: ${formatNumber(obj.diameter_m)}m`}>
                             <g>
                               <circle
@@ -469,10 +377,9 @@ export default function SizeVisualizer() {
                                 cy={0}
                                 r={radius}
                                 fill={obj.color}
-                                fillOpacity={0.4}
+                                fillOpacity={0.3}
                                 stroke={obj.color}
                                 strokeWidth={2}
-                                filter={obj.is_hazardous ? 'url(#glow-red)' : 'url(#glow-blue)'}
                                 style={{ cursor: 'pointer' }}
                               >
                                 <title>{`${obj.label} • ${formatNumber(obj.diameter_m)}m`}</title>
@@ -544,13 +451,10 @@ export default function SizeVisualizer() {
                         <text
                           y={-radius - 10}
                           textAnchor="middle"
-                          fill="#ffffff"
+                          fill="currentColor"
                           fontSize={12}
                           fontWeight={500}
-                          style={{ 
-                            pointerEvents: 'none',
-                            filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8))',
-                          }}
+                          style={{ pointerEvents: 'none' }}
                         >
                           {obj.label} • {formatNumber(obj.diameter_m)}m
                         </text>
@@ -561,17 +465,10 @@ export default function SizeVisualizer() {
 
                 {/* Scale bar */}
                 <g transform={`translate(20, ${height - 40})`}>
-                  <line x1={0} y1={0} x2={100} y2={0} stroke="#a6e3ff" strokeWidth={2} />
-                  <line x1={0} y1={-5} x2={0} y2={5} stroke="#a6e3ff" strokeWidth={2} />
-                  <line x1={100} y1={-5} x2={100} y2={5} stroke="#a6e3ff" strokeWidth={2} />
-                  <text 
-                    x={50} 
-                    y={20} 
-                    textAnchor="middle" 
-                    fill="#ffffff" 
-                    fontSize={12}
-                    style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8))' }}
-                  >
+                  <line x1={0} y1={0} x2={100} y2={0} stroke="currentColor" strokeWidth={2} />
+                  <line x1={0} y1={-5} x2={0} y2={5} stroke="currentColor" strokeWidth={2} />
+                  <line x1={100} y1={-5} x2={100} y2={5} stroke="currentColor" strokeWidth={2} />
+                  <text x={50} y={20} textAnchor="middle" fill="currentColor" fontSize={12}>
                     {formatInteger(maxMeters / 10)} meters
                   </text>
                 </g>
@@ -582,14 +479,7 @@ export default function SizeVisualizer() {
 
         {/* Data Table */}
         {objectsToRender.length > 0 && (
-          <TableContainer 
-            component={Paper}
-            sx={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-            }}
-          >
+          <TableContainer component={Paper}>
             <Table size="small">
               <TableHead>
                 <TableRow>

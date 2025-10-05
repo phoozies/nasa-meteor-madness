@@ -16,6 +16,7 @@ import {
   MenuItem,
   ToggleButtonGroup,
   ToggleButton,
+  useTheme,
 } from '@mui/material';
 import { PlayArrow, Public, Map } from '@mui/icons-material';
 import ParameterSlider from '@/components/ui/ParameterSlider';
@@ -45,6 +46,7 @@ const DynamicNeoSelector = dynamic(
 );
 
 export default function SimulationPage() {
+  const theme = useTheme();
   const [mounted, setMounted] = useState(false);
   const [viewMode, setViewMode] = useState<'3d' | '2d'>('3d');
   const [asteroidData, setAsteroidData] = useState<{ size: number; velocity: number; angle: number; composition: 'rocky' | 'metallic' | 'icy' }>({
@@ -148,7 +150,7 @@ export default function SimulationPage() {
     }
   }, [viewMode, viewerRef]);
 
-  const handleRunSimulation = async () => {
+  const runSimulation = async () => {
     // Check for target based on view mode
     if (viewMode === '3d' && !clickTarget) {
       alert('Select a target on the globe first!');
@@ -247,139 +249,166 @@ export default function SimulationPage() {
   }
 
   return (
-    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      {/* Three-column layout: Parameters | Visualization | Results */}
-      <Grid container sx={{ flex: 1, height: '100%' }}>
-        {/* Left Column: Parameters */}
-        <Grid size={{ xs: 12, md: 2.5, lg: 2.5 }} sx={{ pr: 1 }}>
-          <Card sx={{ height: '100vh', borderRadius: 0 }}>
-            <CardContent sx={{ p: 2, height: '100%', overflow: 'auto' }}>
-              <Typography variant="h6" gutterBottom sx={{ fontSize: '1rem', mb: 1 }}>
-                Parameters
+    <Box sx={{ backgroundColor: theme.palette.background.default, minHeight: '100vh', px: 4, py: 4 }}>        
+      <Grid container spacing={3}>
+        {/* Parameters Panel - Left Column */}
+        <Grid size={{ xs: 12, xl: 3 }}>
+          <Card sx={{ height: { xs: 'auto', xl: 700 } }}>
+            <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <Typography 
+                variant="h5" 
+                sx={{ 
+                  fontWeight: 600, 
+                  mb: 3,
+                }}
+              >
+                Impact Parameters
               </Typography>
+                
+                <Box sx={{ 
+                  mt: 3, 
+                  flex: 1, 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  overflow: 'auto',
+                  pr: 0.5,
+                  '&::-webkit-scrollbar': {
+                    width: '6px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    background: 'transparent',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                    borderRadius: '3px',
+                    '&:hover': {
+                      backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
+                    },
+                  },
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2) transparent' : 'rgba(0, 0, 0, 0.2) transparent',
+                }}>
+                  {viewMode === '2d' && mounted && (
+                    <DynamicNeoSelector
+                      selectedAsteroid={selectedAsteroid}
+                      onAsteroidSelect={(asteroid) => {
+                        setSelectedAsteroid(asteroid);
+                        if (asteroid) {
+                          setAsteroidData({
+                            size: asteroid.size,
+                            velocity: asteroid.velocity,
+                            angle: asteroidData.angle, // Keep user-controlled angle
+                            composition: asteroidData.composition, // Keep user-controlled composition
+                          });
+                        }
+                      }}
+                    />
+                  )}
+                  
+                  <ParameterSlider
+                    label="Asteroid Size"
+                    value={asteroidData.size}
+                    min={10}
+                    max={1000}
+                    step={10}
+                    unit=" m"
+                    onChange={(value) => setAsteroidData({...asteroidData, size: value})}
+                    description="Diameter of the asteroid in meters"
+                    disabled={selectedAsteroid !== null}
+                  />
+                  
+                  <ParameterSlider
+                    label="Impact Velocity"
+                    value={asteroidData.velocity}
+                    min={5}
+                    max={50}
+                    step={1}
+                    unit=" km/s"
+                    onChange={(value) => setAsteroidData({...asteroidData, velocity: value})}
+                    description="Speed at which the asteroid impacts Earth"
+                    disabled={selectedAsteroid !== null}
+                  />
+                  
+                  <ParameterSlider
+                    label="Impact Angle"
+                    value={asteroidData.angle}
+                    min={0}
+                    max={90}
+                    step={1}
+                    unit="°"
+                    onChange={(value) => setAsteroidData({...asteroidData, angle: value})}
+                    description="Angle of impact relative to Earth's surface"
+                  />
 
-              <Box sx={{ mt: 2 }}>
-                <ParameterSlider
-                  label="Asteroid Size"
-                  value={asteroidData.size}
-                  min={10}
-                  max={1000}
-                  step={10}
-                  unit=" m"
-                  onChange={(value) => setAsteroidData({ ...asteroidData, size: value })}
-                  description="Diameter of the asteroid in meters"
-                />
-
-                <ParameterSlider
-                  label="Impact Velocity"
-                  value={asteroidData.velocity}
-                  min={5}
-                  max={50}
-                  step={1}
-                  unit=" km/s"
-                  onChange={(value) => setAsteroidData({ ...asteroidData, velocity: value })}
-                  description="Speed at which the asteroid impacts Earth"
-                />
-
-                <ParameterSlider
-                  label="Impact Angle"
-                  value={asteroidData.angle}
-                  min={0}
-                  max={90}
-                  step={1}
-                  unit="°"
-                  onChange={(value) => setAsteroidData({ ...asteroidData, angle: value })}
-                  description="Angle of impact relative to Earth's surface"
-                />
-
-                <FormControl fullWidth sx={{ mt: 2, mb: 2 }}>
+                <FormControl fullWidth sx={{ mt: 2, mb: 3 }}>
                   <InputLabel>Composition</InputLabel>
                   <Select
                     value={asteroidData.composition}
                     label="Composition"
-                    onChange={(e) => setAsteroidData({ ...asteroidData, composition: e.target.value as 'rocky' | 'metallic' | 'icy' })}
+                    onChange={(e) => setAsteroidData({
+                      ...asteroidData, 
+                      composition: e.target.value as 'rocky' | 'metallic' | 'icy'
+                    })}
                   >
                     <MenuItem value="rocky">Rocky</MenuItem>
                     <MenuItem value="metallic">Metallic</MenuItem>
                     <MenuItem value="icy">Icy</MenuItem>
                   </Select>
                 </FormControl>
-
-                {/* NEO Selector */}
-                {mounted && (
-                  <Box sx={{ mb: 2 }}>
-                    <DynamicNeoSelector
-                      onAsteroidSelect={(neo: typeof selectedAsteroid) => {
-                        setSelectedAsteroid(neo);
-                        if (neo) {
-                          setAsteroidData({
-                            ...asteroidData,
-                            size: neo.size,
-                            velocity: neo.velocity,
-                          });
-                        }
-                      }}
-                      selectedAsteroid={selectedAsteroid}
-                    />
-                  </Box>
-                )}
-
-                <Button
-                  fullWidth
-                  variant="contained"
-                  size="large"
-                  startIcon={<PlayArrow />}
-                  onClick={handleRunSimulation}
-                  sx={{ py: 1.5 }}
-                  disabled={loading}
-                >
-                  {loading ? 'Running Simulation...' : 'Run Simulation'}
-                </Button>
+                
+              <Button
+                fullWidth
+                variant="contained"
+                size="large"
+                startIcon={<PlayArrow />}
+                onClick={runSimulation}
+                sx={{ py: 1.5, mt: 'auto' }}
+                disabled={loading}
+              >
+                {loading ? 'Simulating…' : 'Run Simulation'}
+              </Button>
               </Box>
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Center Column: Visualization */}
-        <Grid size={{ xs: 12, md: 7, lg: 7 }} sx={{ px: 0.5 }}>
-          <Card sx={{ height: '100vh', borderRadius: 0 }}>
-            <CardContent sx={{ p: 1, height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center', 
-                mb: 1, 
-                px: 2, 
-                py: 1,
-                bgcolor: 'background.default',
-                borderBottom: '1px solid #dee2e6'
-              }}>
-                <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                  Impact Visualization
+        {/* Visualization Panel - Center Column (Largest) */}
+        <Grid size={{ xs: 12, xl: 6 }}>
+          <Card sx={{ height: { xs: 500, xl: 700 } }}>
+            <CardContent sx={{ p: 3, height: '100%', overflow: 'hidden' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h5">
+                  Asteroid Impact Visualization
                 </Typography>
                 <ToggleButtonGroup
                   value={viewMode}
                   exclusive
-                  onChange={(e, newMode) => newMode && setViewMode(newMode)}
+                  onChange={(e, newMode) => {
+                    if (newMode !== null) {
+                      setViewMode(newMode);
+                    }
+                  }}
                   size="small"
                   aria-label="view mode"
                 >
-                  <ToggleButton value="3d" aria-label="3d view">
-                    <Public sx={{ mr: 0.5, fontSize: '0.9rem' }} />
-                    3D
+                  <ToggleButton value="3d" aria-label="3D globe view">
+                    <Public sx={{ mr: 1 }} fontSize="small" />
+                    3D Globe
                   </ToggleButton>
-                  <ToggleButton value="2d" aria-label="2d view">
-                    <Map sx={{ mr: 0.5, fontSize: '0.9rem' }} />
-                    2D
+                  <ToggleButton value="2d" aria-label="2D map view">
+                    <Map sx={{ mr: 1 }} fontSize="small" />
+                    2D Map
                   </ToggleButton>
                 </ToggleButtonGroup>
               </Box>
               
               <Box
                 sx={{
-                  flex: 1,
-                  borderRadius: 0,
+                  height: 'calc(100% - 60px)',
+                  minHeight: { xs: '350px', lg: '550px' },
+                  borderRadius: 1,
                   overflow: 'hidden',
+                  border: '1px solid #dee2e6',
                   position: 'relative',
                   backgroundColor: viewMode === '3d' ? 'transparent' : '#f8f9fa',
                   background: viewMode === '3d' ? 'linear-gradient(135deg, #1f2937, #374151)' : '#f8f9fa',
@@ -408,16 +437,23 @@ export default function SimulationPage() {
                     ) : (
                       <>
                         <MapView
+                          impactPoint={impactPoint}
                           setImpactPoint={setImpactPoint}
                           rings={geojsonRings}
-                          impactPoint={impactPoint}
                         />
                         {loading && (
-                          <Typography color="text.secondary" sx={{ position: 'absolute', top: 16, left: 16 }}>
+                          <Typography 
+                            color="text.secondary" 
+                            sx={{ position: 'absolute', top: 16, left: 16, zIndex: 1000 }}
+                          >
                             Simulating…
                           </Typography>
                         )}
-                        <Typography variant="body2" color="text.secondary" sx={{ position: 'absolute', bottom: 16, left: 16 }}>
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary" 
+                          sx={{ position: 'absolute', bottom: 16, left: 16, zIndex: 1000 }}
+                        >
                           Tip: click the map to set the impact point.
                         </Typography>
                       </>
@@ -429,131 +465,154 @@ export default function SimulationPage() {
           </Card>
         </Grid>
 
-        {/* Right Column: Results */}
-        <Grid size={{ xs: 12, md: 2.5, lg: 2.5 }} sx={{ pl: 1 }}>
-          <Card sx={{ height: '100vh', borderRadius: 0 }}>
-            <CardContent sx={{ p: 2, height: '100%', overflow: 'auto' }}>
-              <Typography variant="h6" gutterBottom sx={{ fontSize: '1rem', mb: 1 }}>
-                Results
+        {/* Results Panel - Right Column */}
+        <Grid size={{ xs: 12, xl: 3 }}>
+          <Card sx={{ height: { xs: 'auto', xl: 700 }, display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ p: 3, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+                Impact Results
               </Typography>
               
-              {/* Quick Stats */}
-              <Box sx={{ mb: 2 }}>
-                <Box sx={{ textAlign: 'center', mb: 1, p: 1.5, bgcolor: 'error.main', color: 'white', borderRadius: 1 }}>
-                  <Typography variant="caption">Impact Energy</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>
-                    {results.energy} MT TNT
+              {/* Quick Results Cards */}
+              <Box sx={{ 
+                flex: 1, 
+                overflow: 'auto', 
+                pr: 0.5,
+                '&::-webkit-scrollbar': {
+                  width: '6px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: 'transparent',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                  borderRadius: '3px',
+                  '&:hover': {
+                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
+                  },
+                },
+                scrollbarWidth: 'thin',
+                scrollbarColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2) transparent' : 'rgba(0, 0, 0, 0.2) transparent',
+              }}>
+              <Grid container spacing={2} sx={{ mb: 3 }}>
+                <Grid size={12}>
+                  <Card variant="outlined">
+                    <CardContent sx={{ textAlign: 'center', p: 2 }}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Impact Energy
+                      </Typography>
+                      <Typography variant="h6" sx={{ color: 'error.main', fontWeight: 'bold' }}>
+                        {results.energy} MT TNT
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid size={12}>
+                  <Card variant="outlined">
+                    <CardContent sx={{ textAlign: 'center', p: 2 }}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Crater Diameter
+                      </Typography>
+                      <Typography variant="h6" sx={{ color: 'warning.main', fontWeight: 'bold' }}>
+                        {results.craterDiameter} km
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid size={12}>
+                  <Card variant="outlined">
+                    <CardContent sx={{ textAlign: 'center', p: 2 }}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Affected Area
+                      </Typography>
+                      <Typography variant="h6" sx={{ color: 'info.main', fontWeight: 'bold' }}>
+                        {results.affectedArea} km²
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+              
+              {/* Detailed Impact Statistics from API */}
+              {detailedStats && (
+                <Box sx={{ mt: 2, mb: 2 }}>
+                  {/* Crater Statistics */}
+                  {detailedStats.crater && detailedStats.crater.length > 0 && (
+                    <Box sx={{ mb: 2, p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#1e3a8a' }}>
+                        💥 Crater
+                      </Typography>
+                      {detailedStats.crater.map((stat, idx) => (
+                        <Typography key={idx} variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', lineHeight: 1.5, ml: 1 }}>
+                          • {stat}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+                  
+                  {/* Shockwave Statistics */}
+                  {detailedStats.shockwave && detailedStats.shockwave.length > 0 && (
+                    <Box sx={{ mb: 2, p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#dc2626' }}>
+                        💨 Shock Wave
+                      </Typography>
+                      {detailedStats.shockwave.map((stat, idx) => (
+                        <Typography key={idx} variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', lineHeight: 1.5, ml: 1 }}>
+                          • {stat}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+                  
+                  {/* Wind Blast Statistics */}
+                  {detailedStats.windBlast && detailedStats.windBlast.length > 0 && (
+                    <Box sx={{ mb: 2, p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#f97316' }}>
+                        🌪️ Wind Blast
+                      </Typography>
+                      {detailedStats.windBlast.map((stat, idx) => (
+                        <Typography key={idx} variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', lineHeight: 1.5, ml: 1 }}>
+                          • {stat}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+                  
+                  {/* Seismic Statistics */}
+                  {detailedStats.seismic && detailedStats.seismic.length > 0 && (
+                    <Box sx={{ mb: 2, p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#8b5cf6' }}>
+                        🌍 Seismic Effects
+                      </Typography>
+                      {detailedStats.seismic.map((stat, idx) => (
+                        <Typography key={idx} variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', lineHeight: 1.5, ml: 1 }}>
+                          • {stat}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+              )}
+              
+              {/* Generic Impact Information (shown when no detailed stats) */}
+              {!detailedStats && (
+                <Box sx={{ mt: 'auto', p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary" paragraph>
+                    <strong>Impact Assessment:</strong>
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', lineHeight: 1.4 }}>
+                    • Atmospheric heating and fires{'\n'}
+                    • Debris ejection and fallout{'\n'}
+                    • Seismic activity potential{'\n'}
+                    • Infrastructure damage zones
                   </Typography>
                 </Box>
-                
-                <Box sx={{ textAlign: 'center', mb: 1, p: 1.5, bgcolor: 'warning.main', color: 'white', borderRadius: 1 }}>
-                  <Typography variant="caption">Crater Diameter</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>
-                    {results.craterDiameter} km
-                  </Typography>
-                </Box>
-
-                <Box sx={{ textAlign: 'center', mb: 1, p: 1.5, bgcolor: 'secondary.main', color: 'white', borderRadius: 1 }}>
-                  <Typography variant="caption">Crater Depth</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>
-                    {results.craterDepth} km
-                  </Typography>
-                </Box>
-
-                <Box sx={{ textAlign: 'center', mb: 1, p: 1.5, bgcolor: 'info.main', color: 'white', borderRadius: 1 }}>
-                  <Typography variant="caption">Affected Area</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}>
-                    {results.affectedArea} km²
-                  </Typography>
-                </Box>
+              )}
               </Box>
-
-              {/* Additional Effects */}
-              {(results.seismicMagnitude !== '---' || results.windSpeed !== '---') && (
-                <Box>
-                  <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
-                    Additional Effects
-                  </Typography>
-                  
-                  {results.seismicMagnitude !== '---' && (
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      <strong>Seismic:</strong> {results.seismicMagnitude} magnitude
-                    </Typography>
-                  )}
-                  
-                  {results.windSpeed !== '---' && (
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      <strong>Wind Speed:</strong> {results.windSpeed} km/h
-                    </Typography>
-                  )}
-                </Box>
-              )}
-
-              {/* Impact Zones Info */}
-              {viewMode === '2d' && geojsonRings.length > 0 && (
-                <Box sx={{ mt: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid #dee2e6' }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Impact Zones
-                  </Typography>
-                  <Typography variant="body2">
-                    {geojsonRings.length} zones calculated showing blast effects
-                  </Typography>
-                </Box>
-              )}
             </CardContent>
           </Card>
         </Grid>
       </Grid>
-
-      {/* Detailed Analysis Panel - Only show in 2D mode with detailed stats */}
-      {viewMode === '2d' && detailedStats && (
-        <Card sx={{ mt: 3 }}>
-          <CardContent sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Detailed Impact Analysis
-            </Typography>
-            
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Typography variant="subtitle2" gutterBottom sx={{ color: 'error.main' }}>
-                  Seismic Effects
-                </Typography>
-                <Typography variant="body2" paragraph>
-                  <strong>Magnitude:</strong> {results.seismicMagnitude}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Ground shaking felt across wide area
-                </Typography>
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Typography variant="subtitle2" gutterBottom sx={{ color: 'warning.main' }}>
-                  Atmospheric Effects
-                </Typography>
-                <Typography variant="body2" paragraph>
-                  <strong>Blast Wind:</strong> {results.windSpeed} km/h
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Extreme winds cause structural damage
-                </Typography>
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Typography variant="subtitle2" gutterBottom sx={{ color: 'info.main' }}>
-                  Thermal Radiation
-                </Typography>
-                <Typography variant="body2" paragraph>
-                  <strong>Duration:</strong> ~{Math.round(asteroidData.size / 50)} seconds
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Intense heat causes burns and fires
-                </Typography>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
-      )}
-
     </Box>
   );
 }
