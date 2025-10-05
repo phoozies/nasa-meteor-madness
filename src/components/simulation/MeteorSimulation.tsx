@@ -206,7 +206,7 @@ export default function MeteorSimulation({ viewer, params, target, start, bearin
 
           // Camera focus on impact area with better positioning
           viewer.camera.flyTo({
-            destination: Cesium.Cartesian3.fromDegrees(lon, lat - 0.06, Math.max(craterRadius * 20, 20000)),
+            destination: Cesium.Cartesian3.fromDegrees(lon, lat - 0.3, Math.max(craterRadius * 20, 20000)),
             duration: 2.0,
             orientation: {
               heading: Cesium.Math.toRadians(0.0),
@@ -258,11 +258,12 @@ export default function MeteorSimulation({ viewer, params, target, start, bearin
 
           const distanceToEnd = Cesium.Cartesian3.distance(cart, endPos);
           // followDistance depends on remaining distance but clamped for UX
-          const followDistance = Math.max(5000, Math.min(100000, distanceToEnd * 0.5));
+          // Increase distance and upward bias so the camera stays more zoomed-out
+          const followDistance = Math.max(15000, Math.min(300000, distanceToEnd * 0.75));
 
-          // camera offset = -dir * followDistance (behind the meteor) + small upward bias
+          // camera offset = -dir * followDistance (behind the meteor) + larger upward bias
           const behind = Cesium.Cartesian3.multiplyByScalar(dir, -followDistance, new Cesium.Cartesian3());
-          const upBias = new Cesium.Cartesian3(0, 0, Math.max(2000, followDistance * 0.15));
+          const upBias = new Cesium.Cartesian3(0, 0, Math.max(5000, followDistance * 0.25));
           const cameraOffset = Cesium.Cartesian3.add(behind, upBias, new Cesium.Cartesian3());
 
           // Make the camera look at the meteor from the computed offset
