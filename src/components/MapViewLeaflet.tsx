@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import {
-  MapContainer, TileLayer, Marker, GeoJSON, useMapEvents, Popup, Tooltip
-} from 'react-leaflet';
+  MapContainer, TileLayer, Marker, GeoJSON, useMapEvents, Popup} from 'react-leaflet';
 import L, { LatLngExpression } from 'leaflet';
 import { FormControlLabel, Checkbox, FormGroup } from '@mui/material';
 
