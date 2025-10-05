@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import type { MapViewProps } from '@/components/MapViewLeaflet';
 import {
@@ -20,23 +20,41 @@ import {
 } from '@mui/material';
 import { PlayArrow, Public, Map } from '@mui/icons-material';
 import ParameterSlider from '@/components/ui/ParameterSlider';
-import Globe from '../../components/simulation/globe';
-import NeoSelector from '@/components/simulation/NeoSelector';
+import MeteorSimulation from '@/components/simulation/MeteorSimulation';
+import { ImpactPhysics } from '@/lib/calculations/impactPhysics';
+import type { Viewer, Entity } from 'cesium';
 
-// Client-only Leaflet map with proper typing
+// Client-only components with proper typing
 const MapView = dynamic<MapViewProps>(
   () => import('@/components/MapViewLeaflet').then((mod) => mod.default),
   { ssr: false }
 );
 
+const DynamicGlobe = dynamic(
+  () => import('../../components/simulation/globe'),
+  { 
+    ssr: false,
+    loading: () => <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}><Typography>Loading Globe...</Typography></Box>
+  }
+);
+
+const DynamicNeoSelector = dynamic(
+  () => import('@/components/simulation/NeoSelector'),
+  { 
+    ssr: false,
+    loading: () => <Box sx={{ height: 60, display: 'flex', alignItems: 'center' }}><Typography variant="body2">Loading NEO data...</Typography></Box>
+  }
+);
+
 export default function SimulationPage() {
-  const [viewMode, setViewMode] = useState<'3d' | '2d'>('3d');
   const theme = useTheme();
-  const [asteroidData, setAsteroidData] = useState({
-    size: 100, // meters
-    velocity: 20, // km/s
-    angle: 45, // degrees
-    composition: 'rocky' as 'rocky' | 'metallic' | 'icy',
+  const [mounted, setMounted] = useState(false);
+  const [viewMode, setViewMode] = useState<'3d' | '2d'>('3d');
+  const [asteroidData, setAsteroidData] = useState<{ size: number; velocity: number; angle: number; composition: 'rocky' | 'metallic' | 'icy' }>({
+    size: 100,
+    velocity: 20,
+    angle: 45,
+    composition: 'rocky',
   });
 
   const [results, setResults] = useState({
@@ -56,12 +74,20 @@ export default function SimulationPage() {
     seismic: string[];
   } | null>(null);
 
-  // State for 2D map mode
+  // 3D Globe state
+  const [viewerRef, setViewerRef] = useState<Viewer | null>(null);
+  const [clickTarget, setClickTarget] = useState<{ lon: number; lat: number; height: number } | null>(null);
+  const markerRef = useRef<Entity | null>(null);
+  const [runSim, setRunSim] = useState(false);
+
+  // 2D Map state
   const [impactPoint, setImpactPoint] = useState<{ lon: number; lat: number } | null>(null);
   const [geojsonRings, setGeojsonRings] = useState<
     { id: string; color?: string; opacity?: number; label?: string; description?: string; geojson: GeoJSON.GeoJSON }[]
   >([]);
   const [loading, setLoading] = useState(false);
+
+  // NEO Selector state
   const [selectedAsteroid, setSelectedAsteroid] = useState<{
     id: string;
     name: string;
@@ -78,19 +104,84 @@ export default function SimulationPage() {
     orbitingBody: string;
   } | null>(null);
 
-  const runSimulation = async () => {
-    // Calculate basic metrics for quick display
-    const energy = (asteroidData.size * asteroidData.velocity * asteroidData.velocity / 1000).toFixed(1);
-    const crater = (asteroidData.size * 0.1).toFixed(1);
-    const area = (Math.PI * Math.pow(asteroidData.size * 0.5, 2) / 1000000).toFixed(1);
-    
-    // For 2D mode, run detailed simulation
-    if (viewMode === '2d') {
-      if (!impactPoint) {
-        alert('Click the map to set the impact point first.');
-        return;
-      }
+  // Add marker when clickTarget changes
+  useEffect(() => {
+    if (!viewerRef) return;
 
+    // capture viewerRef to avoid it becoming undefined during async operations
+    const v = viewerRef;
+
+    // Remove previous marker
+    if (markerRef.current) {
+      try { v.entities.remove(markerRef.current); } catch { /* ignore */ }
+      markerRef.current = null;
+    }
+
+    if (!clickTarget) return;
+
+    const addMarker = async () => {
+      const Cesium = await import('cesium');
+      if (!v) return;
+      const entity = v.entities.add({
+        name: 'Target Marker',
+        position: Cesium.Cartesian3.fromDegrees(clickTarget.lon, clickTarget.lat, clickTarget.height),
+        point: { pixelSize: 10, color: Cesium.Color.RED, outlineColor: Cesium.Color.WHITE, outlineWidth: 2 },
+      });
+      markerRef.current = entity;
+    };
+
+    addMarker();
+  }, [clickTarget, viewerRef]);
+
+  // Set mounted state for hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Reset states when switching view modes
+  useEffect(() => {
+    setClickTarget(null);
+    setImpactPoint(null);
+    setRunSim(false);
+    setGeojsonRings([]);
+    setDetailedStats(null);
+    if (markerRef.current && viewerRef) {
+      try { viewerRef.entities.remove(markerRef.current); } catch { /* ignore */ }
+      markerRef.current = null;
+    }
+  }, [viewMode, viewerRef]);
+
+  const runSimulation = async () => {
+    // Check for target based on view mode
+    if (viewMode === '3d' && !clickTarget) {
+      alert('Select a target on the globe first!');
+      return;
+    }
+    
+    if (viewMode === '2d' && !impactPoint) {
+      alert('Click the map to set the impact point first.');
+      return;
+    }
+
+    // Remove marker after launching for 3D mode
+    if (viewMode === '3d' && markerRef.current && viewerRef) {
+      try { viewerRef.entities.remove(markerRef.current); } catch { /* ignore */ }
+      markerRef.current = null;
+    }
+
+    // Calculate impact using proper physics for both modes
+    const impactResults = ImpactPhysics.calculateImpact({
+      diameter: asteroidData.size,
+      velocity: asteroidData.velocity,
+      density: asteroidData.composition === 'metallic' ? 7800 : 
+               asteroidData.composition === 'icy' ? 600 : 2600,
+      angle: asteroidData.angle,
+      composition: asteroidData.composition,
+      targetDensity: 2500 // Default to land impact for 3D mode
+    });
+
+    // For 2D mode, run detailed simulation with API
+    if (viewMode === '2d' && impactPoint) {
       const material =
         asteroidData.composition === 'metallic' ? 'iron' :
         asteroidData.composition === 'icy' ? 'cometary' : 'stony';
@@ -139,18 +230,32 @@ export default function SimulationPage() {
       } finally {
         setLoading(false);
       }
-    } else {
-      // For 3D mode, just show basic calculations
+    } else if (viewMode === '3d') {
+      // For 3D mode, use proper physics calculations
+      const affectedAreaKm2 = Math.PI * Math.pow(impactResults.craterDiameter / 2, 2);
+      
       setResults({
-        energy: energy,
-        craterDiameter: crater,
-        craterDepth: (parseFloat(crater) * 0.15).toFixed(2),
-        affectedArea: area,
-        seismicMagnitude: '---',
-        windSpeed: '---',
+        energy: impactResults.energyMegatonsTNT.toFixed(1),
+        craterDiameter: impactResults.craterDiameter.toFixed(2),
+        craterDepth: impactResults.craterDepth.toFixed(2),
+        affectedArea: affectedAreaKm2.toFixed(1),
+        seismicMagnitude: impactResults.seismicMagnitude.toFixed(1),
+        windSpeed: '---', // Only available in detailed 2D simulation
       });
+
+      // Launch meteor simulation
+      setRunSim(false);
+      setTimeout(() => setRunSim(true), 50);
     }
   };
+
+  if (!mounted) {
+    return (
+      <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ backgroundColor: theme.palette.background.default, minHeight: '100vh', px: 4, py: 4 }}>        
@@ -192,8 +297,8 @@ export default function SimulationPage() {
                   scrollbarWidth: 'thin',
                   scrollbarColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2) transparent' : 'rgba(0, 0, 0, 0.2) transparent',
                 }}>
-                  {viewMode === '2d' && (
-                    <NeoSelector
+                  {viewMode === '2d' && mounted && (
+                    <DynamicNeoSelector
                       selectedAsteroid={selectedAsteroid}
                       onAsteroidSelect={(asteroid) => {
                         setSelectedAsteroid(asteroid);
@@ -268,7 +373,6 @@ export default function SimulationPage() {
                 onClick={runSimulation}
                 sx={{ py: 1.5, mt: 'auto' }}
                 disabled={loading}
-                suppressHydrationWarning
               >
                 {loading ? 'Simulating…' : 'Run Simulation'}
               </Button>
@@ -276,7 +380,7 @@ export default function SimulationPage() {
             </CardContent>
           </Card>
         </Grid>
-        
+
         {/* Visualization Panel - Center Column (Largest) */}
         <Grid size={{ xs: 12, xl: 6 }}>
           <Card sx={{ height: { xs: 500, xl: 700 } }}>
@@ -306,6 +410,7 @@ export default function SimulationPage() {
                   </ToggleButton>
                 </ToggleButtonGroup>
               </Box>
+              
               <Box
                 sx={{
                   height: 'calc(100% - 60px)',
@@ -321,37 +426,54 @@ export default function SimulationPage() {
                   justifyContent: 'center',
                 }}
               >
-                {viewMode === '3d' ? (
-                  <Globe />
-                ) : (
+{mounted && (
                   <>
-                    <MapView
-                      impactPoint={impactPoint}
-                      setImpactPoint={setImpactPoint}
-                      rings={geojsonRings}
-                    />
-                    {loading && (
-                      <Typography 
-                        color="text.secondary" 
-                        sx={{ position: 'absolute', top: 16, left: 16, zIndex: 1000 }}
-                      >
-                        Simulating…
-                      </Typography>
+                    {viewMode === '3d' ? (
+                      <>
+                        <DynamicGlobe
+                          onViewerReady={(v) => setViewerRef(v)}
+                          onClick={(pos) => setClickTarget(pos)}
+                        />
+                        {runSim && viewerRef && clickTarget && (
+                          <MeteorSimulation
+                            viewer={viewerRef}
+                            params={asteroidData}
+                            target={clickTarget}
+                            start={runSim}
+                          />
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <MapView
+                          impactPoint={impactPoint}
+                          setImpactPoint={setImpactPoint}
+                          rings={geojsonRings}
+                        />
+                        {loading && (
+                          <Typography 
+                            color="text.secondary" 
+                            sx={{ position: 'absolute', top: 16, left: 16, zIndex: 1000 }}
+                          >
+                            Simulating…
+                          </Typography>
+                        )}
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary" 
+                          sx={{ position: 'absolute', bottom: 16, left: 16, zIndex: 1000 }}
+                        >
+                          Tip: click the map to set the impact point.
+                        </Typography>
+                      </>
                     )}
-                    <Typography 
-                      variant="body2" 
-                      color="text.secondary" 
-                      sx={{ position: 'absolute', bottom: 16, left: 16, zIndex: 1000 }}
-                    >
-                      Tip: click the map to set the impact point.
-                    </Typography>
                   </>
                 )}
               </Box>
             </CardContent>
           </Card>
         </Grid>
-        
+
         {/* Results Panel - Right Column */}
         <Grid size={{ xs: 12, xl: 3 }}>
           <Card sx={{ height: { xs: 'auto', xl: 700 }, display: 'flex', flexDirection: 'column' }}>
