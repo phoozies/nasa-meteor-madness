@@ -38,6 +38,7 @@ export default function SimulationPage() {
   const [clickTarget, setClickTarget] = useState<{ lon: number; lat: number; height: number } | null>(null);
   const markerRef = useRef<Entity | null>(null);
   const [runSim, setRunSim] = useState(false);
+  const [approachDir, setApproachDir] = useState<'north'|'east'|'south'|'west'>('north');
 
   // Add marker when clickTarget changes
   useEffect(() => {
@@ -158,6 +159,20 @@ export default function SimulationPage() {
                   </Select>
                 </FormControl>
 
+                <FormControl fullWidth sx={{ mt: 1, mb: 3 }}>
+                  <InputLabel>Approach</InputLabel>
+                  <Select
+                    value={approachDir}
+                    label="Approach"
+                    onChange={(e) => setApproachDir(e.target.value as 'north'|'east'|'south'|'west')}
+                  >
+                    <MenuItem value="north">From North</MenuItem>
+                    <MenuItem value="east">From Right (East)</MenuItem>
+                    <MenuItem value="south">From South</MenuItem>
+                    <MenuItem value="west">From Left (West)</MenuItem>
+                  </Select>
+                </FormControl>
+
                 <Button
                   fullWidth
                   variant="contained"
@@ -197,7 +212,13 @@ export default function SimulationPage() {
                   onClick={(pos) => setClickTarget(pos)}
                 />
                 {runSim && viewerRef && clickTarget && (
-                  <MeteorSimulation viewer={viewerRef} params={asteroidData} target={clickTarget} start={runSim} />
+                  <MeteorSimulation
+                    viewer={viewerRef}
+                    params={asteroidData}
+                    target={clickTarget}
+                    start={runSim}
+                    bearingDeg={approachDir === 'north' ? 0 : approachDir === 'east' ? 90 : approachDir === 'south' ? 180 : 270}
+                  />
                 )}
               </Box>
             </CardContent>

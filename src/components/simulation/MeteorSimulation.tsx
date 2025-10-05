@@ -16,9 +16,11 @@ interface MeteorSimulationProps {
   params: MeteorParams;
   target?: { lon: number; lat: number; height: number } | null;
   start?: boolean;
+  // bearing in degrees: 0 = north, 90 = east, 180 = south, 270 = west
+  bearingDeg?: number;
 }
 
-export default function MeteorSimulation({ viewer, params, target, start }: MeteorSimulationProps) {
+export default function MeteorSimulation({ viewer, params, target, start, bearingDeg }: MeteorSimulationProps) {
   const prevStartRef = useRef<boolean>(false);
 
   useEffect(() => {
@@ -38,8 +40,28 @@ export default function MeteorSimulation({ viewer, params, target, start }: Mete
       const Cesium = await import("cesium");
       const { size } = params;
 
-      // Starting position: 150 km above target
-      const startPos = Cesium.Cartesian3.fromDegrees(target.lon, target.lat, 150000);
+  // Starting position: compute so the incoming angle matches params.angle
+  // We'll place the start point at a fixed entry altitude and offset it horizontally
+  // so that the approach angle (from horizontal) equals the input angle. The offset
+  // will be placed along the chosen bearing so the meteor can come from any cardinal direction.
+  const ENTRY_ALTITUDE = 150000; // meters (150 km)
+  // Clamp angle to avoid extreme tan values
+  const angleDeg = Math.max(1, Math.min(params.angle ?? 45, 89));
+  const angleRad = (angleDeg * Math.PI) / 180;
+  // horizontal distance required so that tan(angle) = altitude / horizontalDistance
+  const horizontalDistance = ENTRY_ALTITUDE / Math.tan(angleRad); // meters
+  // Approx meters per degree latitude (varies slightly with latitude, good enough here)
+  const METERS_PER_DEG_LAT = 111320;
+  // Bearing: use provided bearingDeg; otherwise pick a random heading [0,360)
+  const bearing = (typeof bearingDeg === 'number') ? bearingDeg : Math.random() * 360;
+  const bearingRad = (bearing * Math.PI) / 180;
+  // Delta degrees for lat/lon along bearing
+  const deltaLatDeg = (horizontalDistance * Math.cos(bearingRad)) / METERS_PER_DEG_LAT;
+  const metersPerDegLon = Math.max(METERS_PER_DEG_LAT * Math.cos((target.lat * Math.PI) / 180), 1e-6);
+  const deltaLonDeg = (horizontalDistance * Math.sin(bearingRad)) / metersPerDegLon;
+  const startLat = target.lat + deltaLatDeg;
+  const startLon = target.lon + deltaLonDeg;
+  const startPos = Cesium.Cartesian3.fromDegrees(startLon, startLat, ENTRY_ALTITUDE);
       const endPos = Cesium.Cartesian3.fromDegrees(target.lon, target.lat, target.height);
 
       const startTime: JulianDate = Cesium.JulianDate.now();
@@ -273,7 +295,7 @@ export default function MeteorSimulation({ viewer, params, target, start }: Mete
         console.warn('Error cleaning up entities:', e);
       }
     };
-  }, [viewer, params, target, start]);
+  }, [viewer, params, target, start, bearingDeg]);
 
   return null;
 }
