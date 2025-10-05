@@ -17,7 +17,6 @@ import {
   Box,
   useTheme,
   useMediaQuery,
-  Container,
   Tooltip,
 } from '@mui/material';
 import {
@@ -128,8 +127,8 @@ export default function Navigation() {
   return (
     <>
       <AppBar position="static" elevation={0} sx={{ backgroundColor: '#0B3D91' }}>
-        <Container maxWidth="xl">
-          <Toolbar sx={{ px: 0 }}>
+        <Box sx={{ width: '100%' }}>
+          <Toolbar sx={{ px: 2, minHeight: 64 }}>
             {/* NASA-style logo and title */}
             <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
               <Link 
@@ -141,22 +140,17 @@ export default function Navigation() {
                   alignItems: 'center' 
                 }}
               >
-                {/* NASA-inspired logo */}
+                {/* Custom Meteor Madness Logo */}
                 <Box
+                  component="img"
+                  src="/meteor-madness-logo.png"
+                  alt="Meteor Madness Logo"
                   sx={{
-                    width: 40,
-                    height: 40,
-                    backgroundColor: '#ffffff',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    width: 48,
+                    height: 48,
                     mr: 2,
-                    fontSize: '18px',
                   }}
-                >
-                  ☄️
-                </Box>
+                />
                 <Typography 
                   variant="h6" 
                   component="div" 
@@ -248,7 +242,7 @@ export default function Navigation() {
               </Box>
             )}
           </Toolbar>
-        </Container>
+        </Box>
       </AppBar>
       {mobileMenu}
     </>

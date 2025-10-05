@@ -34,7 +34,7 @@ import {
   SelectChangeEvent,
 } from '@mui/material';
 import { sizeReferences, categoryLabels, RefObject } from '@/data/sizeRefs';
-import { Neo, fetchNeoFeed, getDefaultDateRange } from '@/lib/neo';
+import { Neo, fetchNeoFeed } from '@/lib/neo';
 
 const formatNumber = format(',.1f');
 const formatInteger = format(',');
@@ -71,17 +71,12 @@ export default function SizeVisualizer() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Date range
-  const defaultRange = getDefaultDateRange();
-  const [startDate, setStartDate] = useState(defaultRange.startDate);
-  const [endDate, setEndDate] = useState(defaultRange.endDate);
-
-  // Fetch NEOs
+  // Fetch NEOs (uses API default: last 3 days)
   const handleFetchNeos = async () => {
     setLoading(true);
     setError(null);
     try {
-      const fetchedNeos = await fetchNeoFeed(startDate, endDate);
+      const fetchedNeos = await fetchNeoFeed();
       setNeos(fetchedNeos);
       // Auto-select first 3 NEOs
       if (fetchedNeos.length > 0) {
@@ -251,28 +246,8 @@ export default function SizeVisualizer() {
             {/* NEO Fetch */}
             <Box>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                Fetch Real NEOs from NASA
+                Fetch Real NEOs from NASA (Last 3 Days)
               </Typography>
-              <TextField
-                label="Start Date"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                size="small"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                sx={{ mb: 1 }}
-              />
-              <TextField
-                label="End Date"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                size="small"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                sx={{ mb: 1 }}
-              />
               <Button
                 variant="contained"
                 onClick={handleFetchNeos}

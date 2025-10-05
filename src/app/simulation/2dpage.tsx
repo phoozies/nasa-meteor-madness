@@ -96,10 +96,6 @@ export default function SimulationPage() {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Typography variant="h3" component="h1" textAlign="center" gutterBottom>
-        Asteroid Impact Simulation
-      </Typography>
-
       {/* Top: controls + map */}
       <Grid container spacing={4} sx={{ mt: 2 }}>
         {/* Controls Panel */}
@@ -184,7 +180,7 @@ export default function SimulationPage() {
           <Card sx={{ height: { xs: 500, lg: 700 } }}>
             <CardContent sx={{ p: 4, height: '100%' }}>
               <Typography variant="h5" gutterBottom>
-                Impact Visualization
+                Asteroid Impact Visualization
               </Typography>
               <Box
                 sx={{

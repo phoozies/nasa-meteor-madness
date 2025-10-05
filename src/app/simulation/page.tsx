@@ -21,6 +21,7 @@ import {
 import { PlayArrow, Public, Map } from '@mui/icons-material';
 import ParameterSlider from '@/components/ui/ParameterSlider';
 import Globe from '../../components/simulation/globe';
+import NeoSelector from '@/components/simulation/NeoSelector';
 
 // Client-only Leaflet map with proper typing
 const MapView = dynamic<MapViewProps>(
@@ -61,6 +62,21 @@ export default function SimulationPage() {
     { id: string; color?: string; opacity?: number; label?: string; description?: string; geojson: GeoJSON.GeoJSON }[]
   >([]);
   const [loading, setLoading] = useState(false);
+  const [selectedAsteroid, setSelectedAsteroid] = useState<{
+    id: string;
+    name: string;
+    date: string;
+    size: number;
+    velocity: number;
+    isPotentiallyHazardous: boolean;
+    absoluteMagnitude: number;
+    missDistance: {
+      kilometers: number;
+      lunar: number;
+    };
+    closeApproachDate: string;
+    orbitingBody: string;
+  } | null>(null);
 
   const runSimulation = async () => {
     // Calculate basic metrics for quick display
@@ -137,11 +153,7 @@ export default function SimulationPage() {
   };
 
   return (
-    <Box sx={{ backgroundColor: theme.palette.background.default, minHeight: '100vh', px: 4, py: 4 }}>
-      <Typography variant="h3" component="h1" textAlign="center" gutterBottom sx={{ mb: 4 }}>
-        Asteroid Impact Simulation
-      </Typography>
-        
+    <Box sx={{ backgroundColor: theme.palette.background.default, minHeight: '100vh', px: 4, py: 4 }}>        
       <Grid container spacing={3}>
         {/* Parameters Panel - Left Column */}
         <Grid size={{ xs: 12, xl: 3 }}>
@@ -180,6 +192,23 @@ export default function SimulationPage() {
                   scrollbarWidth: 'thin',
                   scrollbarColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2) transparent' : 'rgba(0, 0, 0, 0.2) transparent',
                 }}>
+                  {viewMode === '2d' && (
+                    <NeoSelector
+                      selectedAsteroid={selectedAsteroid}
+                      onAsteroidSelect={(asteroid) => {
+                        setSelectedAsteroid(asteroid);
+                        if (asteroid) {
+                          setAsteroidData({
+                            size: asteroid.size,
+                            velocity: asteroid.velocity,
+                            angle: asteroidData.angle, // Keep user-controlled angle
+                            composition: asteroidData.composition, // Keep user-controlled composition
+                          });
+                        }
+                      }}
+                    />
+                  )}
+                  
                   <ParameterSlider
                     label="Asteroid Size"
                     value={asteroidData.size}
@@ -189,6 +218,7 @@ export default function SimulationPage() {
                     unit=" m"
                     onChange={(value) => setAsteroidData({...asteroidData, size: value})}
                     description="Diameter of the asteroid in meters"
+                    disabled={selectedAsteroid !== null}
                   />
                   
                   <ParameterSlider
@@ -200,6 +230,7 @@ export default function SimulationPage() {
                     unit=" km/s"
                     onChange={(value) => setAsteroidData({...asteroidData, velocity: value})}
                     description="Speed at which the asteroid impacts Earth"
+                    disabled={selectedAsteroid !== null}
                   />
                   
                   <ParameterSlider
@@ -252,7 +283,7 @@ export default function SimulationPage() {
             <CardContent sx={{ p: 3, height: '100%', overflow: 'hidden' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h5">
-                  Impact Visualization
+                  Asteroid Impact Visualization
                 </Typography>
                 <ToggleButtonGroup
                   value={viewMode}

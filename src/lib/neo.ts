@@ -37,26 +37,48 @@ export type Neo = {
 
 /**
  * Fetch NEOs from NASA API via our proxy endpoint
+ * If no dates provided, API defaults to last 3 days
  */
 export async function fetchNeoFeed(
-  startDate: string,
-  endDate: string
+  startDate?: string,
+  endDate?: string
 ): Promise<Neo[]> {
   try {
-    const params = new URLSearchParams({
-      start_date: startDate,
-      end_date: endDate,
-    });
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
 
-    const response = await fetch(`/api/neo?${params.toString()}`);
+    const queryString = params.toString();
+    const url = queryString ? `/api/neo?${queryString}` : '/api/neo';
+    
+    const response = await fetch(url);
     
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Failed to fetch NEO data: ${response.status} - ${errorText}`);
     }
 
-    const data: Neo[] = await response.json();
-    return data;
+    const data = await response.json();
+    
+    // Handle the new API format: { success, count, asteroids, dateRange }
+    if (data.asteroids && Array.isArray(data.asteroids)) {
+      // Convert the new format to our Neo format
+      return data.asteroids.map((asteroid: any) => ({
+        id: asteroid.id,
+        name: asteroid.name.replace(/[()]/g, ''), // Clean up name
+        diameter_m: asteroid.size, // Already in meters
+        date: asteroid.date,
+        velocity_kps: asteroid.velocity, // Already in km/s
+        is_hazardous: asteroid.isPotentiallyHazardous,
+      }));
+    }
+    
+    // Fallback for old format (if it's still used elsewhere)
+    if (Array.isArray(data)) {
+      return data;
+    }
+    
+    return [];
   } catch (error) {
     console.error('Error fetching NEO data:', error);
     throw error;
