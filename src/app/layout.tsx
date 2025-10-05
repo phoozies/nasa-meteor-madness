@@ -1,20 +1,36 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import { ThemeProvider } from '@mui/material/styles';
+import { Source_Sans_3 } from "next/font/google";
 import { CssBaseline } from '@mui/material';
 import Navigation from "@/components/layout/Navigation";
-import { theme } from '@/lib/theme';
+import { ThemeModeProvider } from '@/contexts/ThemeContext';
+import { AppThemeProvider } from '@/components/providers/AppThemeProvider';
 import "./globals.css";
 import "../styles/visualizations.css";
 
-const inter = Inter({
+// NASA recommended fonts - Source Sans Pro for UI text
+const sourceSans = Source_Sans_3({
   subsets: ["latin"],
   display: 'swap',
+  variable: '--font-source-sans',
+  weight: ['300', '400', '600', '700'],
 });
 
 export const metadata: Metadata = {
   title: "Meteor Madness - NASA Space Apps Challenge 2025",
   description: "Interactive asteroid impact simulation and visualization tool for planetary defense education and risk assessment.",
+  icons: {
+    icon: [
+      {
+        url: '/meteor-madness-logo.png',
+        type: 'image/png',
+      },
+    ],
+    shortcut: '/meteor-madness-logo.png',
+  },
+  keywords: ['NASA', 'asteroid', 'meteor', 'impact simulation', 'planetary defense', 'space apps challenge'],
+  authors: [{ name: 'NASA Space Apps Challenge Team' }],
+  creator: 'Error Terrors',
+  publisher: 'NASA Space Apps Challenge',
 };
 
 export default function RootLayout({
@@ -24,12 +40,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <Navigation />
-          {children}
-        </ThemeProvider>
+      <body className={sourceSans.className}>
+        <ThemeModeProvider>
+          <AppThemeProvider>
+            <CssBaseline />
+            <Navigation />
+            {children}
+          </AppThemeProvider>
+        </ThemeModeProvider>
       </body>
     </html>
   );

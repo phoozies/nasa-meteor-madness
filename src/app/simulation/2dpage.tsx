@@ -1,10 +1,18 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { MapViewProps } from '@/components/MapViewLeaflet';
+
+// Client-only Leaflet map with proper typing
+const MapView = dynamic<MapViewProps>(
+  () => import('@/components/MapViewLeaflet').then((mod) => mod.default),
+  { ssr: false }
+);
+
 import {
   Box,
+  Container,
   Typography,
   Card,
   CardContent,
@@ -14,143 +22,81 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  ToggleButtonGroup,
-  ToggleButton,
-  useTheme,
 } from '@mui/material';
-import { PlayArrow, Public, Map } from '@mui/icons-material';
-import ParameterSlider from '@/components/ui/ParameterSlider';
-import Globe from '../../components/simulation/globe';
-import NeoSelector from '@/components/simulation/NeoSelector';
-import MeteorSimulation from '@/components/simulation/MeteorSimulation';
-import type { Viewer, Entity } from 'cesium';
 
-// Client-only Leaflet map with proper typing
-const MapView = dynamic<MapViewProps>(
-  () => import('@/components/MapViewLeaflet').then((mod) => mod.default),
-  { ssr: false }
-);
+import { PlayArrow } from '@mui/icons-material';
+import ParameterSlider from '@/components/ui/ParameterSlider';
 
 export default function SimulationPage() {
-  const [viewMode, setViewMode] = useState<'3d' | '2d'>('3d');
-  const theme = useTheme();
-  const [asteroidData, setAsteroidData] = useState<{ size: number; velocity: number; angle: number; composition: 'rocky' | 'metallic' | 'icy' }>({
-    size: 100,
-    velocity: 20,
-    angle: 45,
-    composition: 'rocky',
+  const [asteroidData, setAsteroidData] = useState({
+    size: 100,       // meters
+    velocity: 20,    // km/s
+    angle: 45,       // degrees
+    composition: 'rocky' as 'rocky' | 'metallic' | 'icy',
   });
 
   const [results, setResults] = useState({
     energy: '---',
     craterDiameter: '---',
-    craterDepth: '---',
     affectedArea: '---',
-    seismicMagnitude: '---',
-    windSpeed: '---',
   });
 
-  // Detailed statistics from API
-  const [detailedStats, setDetailedStats] = useState<{
-    crater: string[];
-    shockwave: string[];
-    windBlast: string[];
-    seismic: string[];
-  } | null>(null);
-
-  // 3D Globe state
-  const [viewerRef, setViewerRef] = useState<Viewer | null>(null);
-  const [clickTarget, setClickTarget] = useState<{ lon: number; lat: number; height: number } | null>(null);
-  const markerRef = useRef<Entity | null>(null);
-  const [runSim, setRunSim] = useState(false);
-
-  // 2D Map state
   const [impactPoint, setImpactPoint] = useState<{ lon: number; lat: number } | null>(null);
   const [geojsonRings, setGeojsonRings] = useState<
-    { id: string; color?: string; opacity?: number; label?: string; description?: string; geojson: GeoJSON.GeoJSON }[]
+    { id: string; color?: string; opacity?: number; geojson: GeoJSON.GeoJSON }[]
   >([]);
   const [loading, setLoading] = useState(false);
 
-  // NEO Selector state
-  const [selectedAsteroid, setSelectedAsteroid] = useState<{
-    id: string;
-    name: string;
-    date: string;
-    size: number;
-    velocity: number;
-    isPotentiallyHazardous: boolean;
-    absoluteMagnitude: number;
-    missDistance: {
-      kilometers: number;
-      lunar: number;
-    };
-    closeApproachDate: string;
-    orbitingBody: string;
-  } | null>(null);
+  const runSimulation = async () => {
+    // simple UI metrics (illustrative)
+    const energy = (asteroidData.size * asteroidData.velocity * asteroidData.velocity / 1000).toFixed(1);
+    const crater = (asteroidData.size * 0.1).toFixed(1);
+    const area = (Math.PI * Math.pow(asteroidData.size * 0.5, 2) / 1_000_000).toFixed(1);
+    setResults({ energy, craterDiameter: crater, affectedArea: area });
 
-  // Add marker when clickTarget changes
-  useEffect(() => {
-    if (!viewerRef) return;
-
-    // capture viewerRef to avoid it becoming undefined during async operations
-    const v = viewerRef;
-
-    // Remove previous marker
-    if (markerRef.current) {
-      try { v.entities.remove(markerRef.current); } catch { /* ignore */ }
-      markerRef.current = null;
-    }
-
-    if (!clickTarget) return;
-
-    const addMarker = async () => {
-      const Cesium = await import('cesium');
-      if (!v) return;
-      const entity = v.entities.add({
-        name: 'Target Marker',
-        position: Cesium.Cartesian3.fromDegrees(clickTarget.lon, clickTarget.lat, clickTarget.height),
-        point: { pixelSize: 10, color: Cesium.Color.RED, outlineColor: Cesium.Color.WHITE, outlineWidth: 2 },
-      });
-      markerRef.current = entity;
-    };
-
-    addMarker();
-  }, [clickTarget, viewerRef]);
-
-  const handleRunSimulation = () => {
-    if (!clickTarget) {
-      alert('Select a target on the globe first!');
+    if (!impactPoint) {
+      alert('Click the map to set the impact point first.');
       return;
     }
 
-    // Remove marker after launching
-    if (markerRef.current && viewerRef) {
-      try { viewerRef.entities.remove(markerRef.current); } catch { /* ignore */ }
-      markerRef.current = null;
+    const material =
+      asteroidData.composition === 'metallic' ? 'iron' :
+      asteroidData.composition === 'icy'      ? 'cometary' : 'stony';
+
+    const density = material === 'iron' ? 7800 : material === 'cometary' ? 600 : 3000;
+
+    const payload = {
+      diameter_m: asteroidData.size,
+      density,
+      speed_ms: asteroidData.velocity * 1000, // km/s -> m/s
+      angle_deg: asteroidData.angle,
+      material,
+      lon: impactPoint.lon,
+      lat: impactPoint.lat,
+      mitigation: { method: 'none' as const, dv_ms: 0, lead_time_days: 0 },
+    };
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/simulate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        console.error('simulate failed', res.status, await res.text());
+        return;
+      }
+      const data = await res.json();
+      setGeojsonRings(data.rings || []);
+    } finally {
+      setLoading(false);
     }
-
-    // Run impact calculations
-    const energy = (asteroidData.size * asteroidData.velocity ** 2 / 1000).toFixed(1);
-    const crater = (asteroidData.size * 0.1).toFixed(1);
-    const area = (Math.PI * (asteroidData.size * 0.5) ** 2 / 1000000).toFixed(1);
-
-    setResults({
-      energy,
-      craterDiameter: crater,
-      affectedArea: area,
-    });
-
-    // Launch meteor simulation
-    setRunSim(false);
-    setTimeout(() => setRunSim(true), 50);
   };
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Typography variant="h3" component="h1" textAlign="center" gutterBottom>
-        Asteroid Impact Simulation
-      </Typography>
-
+      {/* Top: controls + map */}
       <Grid container spacing={4} sx={{ mt: 2 }}>
         {/* Controls Panel */}
         <Grid size={{ xs: 12, lg: 4 }}>
@@ -199,7 +145,12 @@ export default function SimulationPage() {
                   <Select
                     value={asteroidData.composition}
                     label="Composition"
-                    onChange={(e) => setAsteroidData({ ...asteroidData, composition: e.target.value as 'rocky' | 'metallic' | 'icy' })}
+                    onChange={(e) =>
+                      setAsteroidData({
+                        ...asteroidData,
+                        composition: e.target.value as 'rocky' | 'metallic' | 'icy',
+                      })
+                    }
                   >
                     <MenuItem value="rocky">Rocky</MenuItem>
                     <MenuItem value="metallic">Metallic</MenuItem>
@@ -207,18 +158,17 @@ export default function SimulationPage() {
                   </Select>
                 </FormControl>
 
-                {/* Approach selection removed: bearing will be randomized by the simulation for variety */}
-
                 <Button
                   fullWidth
                   variant="contained"
                   size="large"
                   startIcon={<PlayArrow />}
-                  onClick={handleRunSimulation}
+                  onClick={runSimulation}
                   sx={{ py: 1.5 }}
+                  disabled={loading}
                   suppressHydrationWarning
                 >
-                  Run Simulation
+                  {loading ? 'Simulating…' : 'Run Simulation'}
                 </Button>
               </Box>
             </CardContent>
@@ -227,41 +177,42 @@ export default function SimulationPage() {
 
         {/* Visualization Panel */}
         <Grid size={{ xs: 12, lg: 8 }}>
-          <Card sx={{ height: { xs: 400, lg: 600 } }}>
+          <Card sx={{ height: { xs: 500, lg: 700 } }}>
             <CardContent sx={{ p: 4, height: '100%' }}>
               <Typography variant="h5" gutterBottom>
-                Impact Visualization
+                Asteroid Impact Visualization
               </Typography>
               <Box
                 sx={{
-                  height: 'calc(100% - 40px)',
-                  background: 'linear-gradient(135deg, #1f2937, #374151)',
+                  height: 'calc(100% - 60px)',
+                  minHeight: { xs: '350px', lg: '550px' },
                   borderRadius: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  overflow: 'hidden',
+                  border: '1px solid #dee2e6',
+                  position: 'relative',
+                  backgroundColor: '#f8f9fa',
                 }}
               >
-                <Globe
-                  onViewerReady={(v) => setViewerRef(v)}
-                  onClick={(pos) => setClickTarget(pos)}
+                <MapView
+                  impactPoint={impactPoint}
+                  setImpactPoint={setImpactPoint}
+                  rings={geojsonRings}
                 />
-                {runSim && viewerRef && clickTarget && (
-                  <MeteorSimulation
-                    viewer={viewerRef}
-                    params={asteroidData}
-                    target={clickTarget}
-                    start={runSim}
-                  />
+                {loading && (
+                  <Typography color="text.secondary" sx={{ position: 'absolute', top: 16, left: 16 }}>
+                    Simulating…
+                  </Typography>
                 )}
+                <Typography variant="body2" color="text.secondary" sx={{ position: 'absolute', bottom: 16, left: 16 }}>
+                  Tip: click the map to set the impact point.
+                </Typography>
               </Box>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      {/* Results Panel */}
+      {/* Bottom: KPI cards */}
       <Grid container spacing={3} sx={{ mt: 4 }}>
         <Grid size={{ xs: 12, md: 4 }}>
           <Card>
