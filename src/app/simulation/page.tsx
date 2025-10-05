@@ -1,15 +1,13 @@
-'use client';
 
+
+"use client";
 import { useState } from 'react';
+import ParameterSlider from '@/components/ui/ParameterSlider';
+import Globe from '@/components/visualization/Earth3D';
+import PlayArrow from '@mui/icons-material/PlayArrow';
 import dynamic from 'next/dynamic';
 import type { MapViewProps } from '@/components/MapViewLeaflet';
-
-// Client-only Leaflet map with proper typing
-const MapView = dynamic<MapViewProps>(
-  () => import('@/components/MapViewLeaflet').then((mod) => mod.default),
-  { ssr: false }
-);
-
+import Simulation2D from './2dpage';
 import {
   Box,
   Container,
@@ -22,25 +20,27 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
 
-import { PlayArrow } from '@mui/icons-material';
-import ParameterSlider from '@/components/ui/ParameterSlider';
-
 export default function SimulationPage() {
+  const [view, setView] = useState<'regular' | '2d'>('regular');
+  const handleViewChange = (_event: React.MouseEvent<HTMLElement>, newView: 'regular' | '2d' | null) => {
+    if (newView) setView(newView);
+  };
+
   const [asteroidData, setAsteroidData] = useState({
-    size: 100,       // meters
-    velocity: 20,    // km/s
-    angle: 45,       // degrees
+    size: 100,
+    velocity: 20,
+    angle: 45,
     composition: 'rocky' as 'rocky' | 'metallic' | 'icy',
   });
-
   const [results, setResults] = useState({
-    energy: '---',
-    craterDiameter: '---',
-    affectedArea: '---',
+    energy: '0',
+    craterDiameter: '0',
+    affectedArea: '0',
   });
-
   const [impactPoint, setImpactPoint] = useState<{ lon: number; lat: number } | null>(null);
   const [geojsonRings, setGeojsonRings] = useState<
     { id: string; color?: string; opacity?: number; geojson: GeoJSON.GeoJSON }[]
@@ -96,165 +96,164 @@ export default function SimulationPage() {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Typography variant="h3" component="h1" textAlign="center" gutterBottom>
-        Asteroid Impact Simulation
-      </Typography>
-
-      {/* Top: controls + map */}
-      <Grid container spacing={4} sx={{ mt: 2 }}>
-        {/* Controls Panel */}
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Card>
-            <CardContent sx={{ p: 4 }}>
-              <Typography variant="h5" gutterBottom>
-                Impact Parameters
-              </Typography>
-
-              <Box sx={{ mt: 3 }}>
-                <ParameterSlider
-                  label="Asteroid Size"
-                  value={asteroidData.size}
-                  min={10}
-                  max={1000}
-                  step={10}
-                  unit=" m"
-                  onChange={(value) => setAsteroidData({ ...asteroidData, size: value })}
-                  description="Diameter of the asteroid in meters"
-                />
-
-                <ParameterSlider
-                  label="Impact Velocity"
-                  value={asteroidData.velocity}
-                  min={5}
-                  max={50}
-                  step={1}
-                  unit=" km/s"
-                  onChange={(value) => setAsteroidData({ ...asteroidData, velocity: value })}
-                  description="Speed at which the asteroid impacts Earth"
-                />
-
-                <ParameterSlider
-                  label="Impact Angle"
-                  value={asteroidData.angle}
-                  min={0}
-                  max={90}
-                  step={1}
-                  unit="°"
-                  onChange={(value) => setAsteroidData({ ...asteroidData, angle: value })}
-                  description="Angle of impact relative to Earth's surface"
-                />
-
-                <FormControl fullWidth sx={{ mt: 2, mb: 3 }}>
-                  <InputLabel>Composition</InputLabel>
-                  <Select
-                    value={asteroidData.composition}
-                    label="Composition"
-                    onChange={(e) =>
-                      setAsteroidData({
-                        ...asteroidData,
-                        composition: e.target.value as 'rocky' | 'metallic' | 'icy',
-                      })
-                    }
-                  >
-                    <MenuItem value="rocky">Rocky</MenuItem>
-                    <MenuItem value="metallic">Metallic</MenuItem>
-                    <MenuItem value="icy">Icy</MenuItem>
-                  </Select>
-                </FormControl>
-
-                <Button
-                  fullWidth
-                  variant="contained"
-                  size="large"
-                  startIcon={<PlayArrow />}
-                  onClick={runSimulation}
-                  sx={{ py: 1.5 }}
-                  disabled={loading}
-                  suppressHydrationWarning
-                >
-                  {loading ? 'Simulating…' : 'Run Simulation'}
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Visualization Panel */}
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <Card sx={{ height: { xs: 500, lg: 700 } }}>
-            <CardContent sx={{ p: 4, height: '100%' }}>
-              <Typography variant="h5" gutterBottom>
-                Impact Visualization
-              </Typography>
-              <Box
-                sx={{
-                  height: 'calc(100% - 60px)',
-                  minHeight: { xs: '350px', lg: '550px' },
-                  borderRadius: 1,
-                  overflow: 'hidden',
-                  border: '1px solid #dee2e6',
-                  position: 'relative',
-                  backgroundColor: '#f8f9fa',
-                }}
-              >
-                <MapView
-                  impactPoint={impactPoint}
-                  setImpactPoint={setImpactPoint}
-                  rings={geojsonRings}
-                />
-                {loading && (
-                  <Typography color="text.secondary" sx={{ position: 'absolute', top: 16, left: 16 }}>
-                    Simulating…
+      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+        <ToggleButtonGroup
+          value={view}
+          exclusive
+          onChange={handleViewChange}
+          aria-label="Simulation View"
+        >
+          <ToggleButton value="regular" aria-label="Regular Simulation">Regular</ToggleButton>
+          <ToggleButton value="2d" aria-label="2D Simulation">2D</ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
+      {view === '2d' ? (
+        <Simulation2D />
+      ) : (
+        <>
+          <Typography variant="h3" component="h1" textAlign="center" gutterBottom>
+            Asteroid Impact Simulation
+          </Typography>
+          {/* ...existing regular simulation JSX... */}
+          {/* Top: controls + map */}
+          <Grid container spacing={4} sx={{ mt: 2 }}>
+            {/* Controls Panel */}
+            <Grid size={{ xs: 12, lg: 4 }}>
+              <Card>
+                <CardContent sx={{ p: 4 }}>
+                  <Typography variant="h5" gutterBottom>
+                    Impact Parameters
                   </Typography>
-                )}
-                <Typography variant="body2" color="text.secondary" sx={{ position: 'absolute', bottom: 16, left: 16 }}>
-                  Tip: click the map to set the impact point.
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Bottom: KPI cards */}
-      <Grid container spacing={3} sx={{ mt: 4 }}>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center', p: 4 }}>
-              <Typography variant="h6" gutterBottom>
-                Impact Energy
-              </Typography>
-              <Typography variant="h3" sx={{ color: 'error.main', fontWeight: 'bold' }}>
-                {results.energy} MT TNT
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center', p: 4 }}>
-              <Typography variant="h6" gutterBottom>
-                Crater Diameter
-              </Typography>
-              <Typography variant="h3" sx={{ color: 'warning.main', fontWeight: 'bold' }}>
-                {results.craterDiameter} km
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center', p: 4 }}>
-              <Typography variant="h6" gutterBottom>
-                Affected Area
-              </Typography>
-              <Typography variant="h3" sx={{ color: 'info.main', fontWeight: 'bold' }}>
-                {results.affectedArea} km²
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+                  <Box sx={{ mt: 3 }}>
+                    <ParameterSlider
+                      label="Asteroid Size"
+                      value={asteroidData.size}
+                      min={10}
+                      max={1000}
+                      step={10}
+                      unit=" m"
+                      onChange={(value) => setAsteroidData({ ...asteroidData, size: value })}
+                      description="Diameter of the asteroid in meters"
+                    />
+                    <ParameterSlider
+                      label="Impact Velocity"
+                      value={asteroidData.velocity}
+                      min={5}
+                      max={50}
+                      step={1}
+                      unit=" km/s"
+                      onChange={(value) => setAsteroidData({ ...asteroidData, velocity: value })}
+                      description="Speed at which the asteroid impacts Earth"
+                    />
+                    <ParameterSlider
+                      label="Impact Angle"
+                      value={asteroidData.angle}
+                      min={0}
+                      max={90}
+                      step={1}
+                      unit="°"
+                      onChange={(value) => setAsteroidData({ ...asteroidData, angle: value })}
+                      description="Angle of impact relative to Earth's surface"
+                    />
+                    <FormControl fullWidth sx={{ mt: 2, mb: 3 }}>
+                      <InputLabel>Composition</InputLabel>
+                      <Select
+                        value={asteroidData.composition}
+                        label="Composition"
+                        onChange={(e) =>
+                          setAsteroidData({
+                            ...asteroidData,
+                            composition: e.target.value as 'rocky' | 'metallic' | 'icy',
+                          })
+                        }
+                      >
+                        <MenuItem value="rocky">Rocky</MenuItem>
+                        <MenuItem value="metallic">Metallic</MenuItem>
+                        <MenuItem value="icy">Icy</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      size="large"
+                      startIcon={<PlayArrow />}
+                      onClick={runSimulation}
+                      sx={{ py: 1.5 }}
+                      disabled={loading}
+                      suppressHydrationWarning
+                    >
+                      {loading ? 'Simulating…' : 'Run Simulation'}
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+            {/* Visualization Panel */}
+            <Grid size={{ xs: 12, lg: 8 }}>
+              <Card sx={{ height: { xs: 500, lg: 700 } }}>
+                <CardContent sx={{ p: 4, height: '100%' }}>
+                  <Typography variant="h5" gutterBottom>
+                    Impact Visualization
+                  </Typography>
+                  <Box
+                    sx={{
+                      height: 'calc(100% - 60px)',
+                      minHeight: { xs: '350px', lg: '550px' },
+                      borderRadius: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                    }}
+                  >
+                    <Globe />
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+          {/* Bottom: KPI cards */}
+          <Grid container spacing={3} sx={{ mt: 4 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card>
+                <CardContent sx={{ textAlign: 'center', p: 4 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Impact Energy
+                  </Typography>
+                  <Typography variant="h3" sx={{ color: 'error.main', fontWeight: 'bold' }}>
+                    {results.energy} MT TNT
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card>
+                <CardContent sx={{ textAlign: 'center', p: 4 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Crater Diameter
+                  </Typography>
+                  <Typography variant="h3" sx={{ color: 'warning.main', fontWeight: 'bold' }}>
+                    {results.craterDiameter} km
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card>
+                <CardContent sx={{ textAlign: 'center', p: 4 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Affected Area
+                  </Typography>
+                  <Typography variant="h3" sx={{ color: 'info.main', fontWeight: 'bold' }}>
+                    {results.affectedArea} km²
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </>
+      )}
     </Container>
   );
 }
+

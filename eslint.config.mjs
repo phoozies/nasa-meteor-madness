@@ -18,8 +18,19 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      "Build/Cesium/**",
+      "public/Build/**"
     ],
   },
+  {
+    files: ["Build/Cesium/**", "public/Build/**"],
+    rules: {
+      "@typescript-eslint/no-unused-expressions": "off",
+      "@typescript-eslint/no-this-alias": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/no-array-constructor": "off"
+    },
+  }
 ];
 
 export default eslintConfig;
