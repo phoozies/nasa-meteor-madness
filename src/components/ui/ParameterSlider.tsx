@@ -10,6 +10,7 @@ interface ParameterSliderProps {
   unit?: string;
   onChange: (value: number) => void;
   description?: string;
+  disabled?: boolean;
 }
 
 export default function ParameterSlider({
@@ -20,7 +21,8 @@ export default function ParameterSlider({
   step = 1,
   unit = '',
   onChange,
-  description
+  description,
+  disabled = false
 }: ParameterSliderProps) {
   const handleChange = (_: Event, newValue: number | number[]) => {
     onChange(Array.isArray(newValue) ? newValue[0] : newValue);
@@ -61,10 +63,12 @@ export default function ParameterSlider({
         max={max}
         step={step}
         onChange={handleChange}
+        disabled={disabled}
         valueLabelDisplay="auto"
         valueLabelFormat={(val) => `${val}${unit}`}
         sx={{ 
           mb: 2,
+          opacity: disabled ? 0.5 : 1,
           '& .MuiSlider-valueLabel': {
             backgroundColor: '#0B3D91',
             color: '#ffffff',
