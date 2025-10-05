@@ -28,7 +28,7 @@ function ClickSetter({ onClick }: { onClick: (lat: number, lon: number) => void 
 
 export default function MapViewLeaflet({
   impactPoint, setImpactPoint, rings,
-}: MapViewProps): JSX.Element {
+}: MapViewProps) {
   const center: LatLngExpression = useMemo(
     () => impactPoint ? [impactPoint.lat, impactPoint.lon] : [29, -95],
     [impactPoint]
