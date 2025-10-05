@@ -82,7 +82,7 @@ export default function MeteorSimulation({ viewer, params, target, start, bearin
       position.addSample(startTime, startPos);
       position.addSample(endTime, endPos);
 
-      meteorEntity = viewer.entities.add({
+  meteorEntity = viewer.entities.add({
         name: "Meteor",
         position,
         point: {
@@ -104,11 +104,22 @@ export default function MeteorSimulation({ viewer, params, target, start, bearin
         },
       });
 
+      // camera follow will be handled in the tick listener for better centering at steep angles
+
       // Impact handler
       const triggerImpact = (cartesianPos: Cartesian3, carto: Cartographic, currentTime: JulianDate) => {
         try {
           impactTime = currentTime;
           if (meteorEntity) meteorEntity.show = false;
+
+          // Stop any camera lookAt-follow so we can focus on the impact animation
+          try {
+            if (viewer && !viewer.isDestroyed()) {
+              viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
+            }
+          } catch (e) {
+            console.warn('Could not reset camera at impact:', e);
+          }
 
           const lon = Cesium.Math.toDegrees(carto.longitude);
           const lat = Cesium.Math.toDegrees(carto.latitude);
@@ -217,9 +228,9 @@ export default function MeteorSimulation({ viewer, params, target, start, bearin
       // Improved impact detection - check both position and time
       tickListener = () => {
         if (!position || impactTriggered) return;
-        
+
         const now = viewer.clock.currentTime;
-        
+
         // Check if we're close to the end time
         const timeToEnd = Cesium.JulianDate.secondsDifference(endTime, now);
         if (timeToEnd <= 0.1) {
@@ -231,12 +242,33 @@ export default function MeteorSimulation({ viewer, params, target, start, bearin
           }
           return;
         }
-        
+
         // Also check height-based detection as backup
         const cart = position.getValue(now);
         if (!cart) return;
         const carto = Cesium.Cartographic.fromCartesian(cart);
         const height = carto.height;
+
+        // Camera follow logic: position the camera behind the meteor along its flight vector
+        try {
+          // compute direction from current position to end position
+          const dir = Cesium.Cartesian3.subtract(endPos, cart, new Cesium.Cartesian3());
+          Cesium.Cartesian3.normalize(dir, dir);
+
+          const distanceToEnd = Cesium.Cartesian3.distance(cart, endPos);
+          // followDistance depends on remaining distance but clamped for UX
+          const followDistance = Math.max(5000, Math.min(100000, distanceToEnd * 0.5));
+
+          // camera offset = -dir * followDistance (behind the meteor) + small upward bias
+          const behind = Cesium.Cartesian3.multiplyByScalar(dir, -followDistance, new Cesium.Cartesian3());
+          const upBias = new Cesium.Cartesian3(0, 0, Math.max(2000, followDistance * 0.15));
+          const cameraOffset = Cesium.Cartesian3.add(behind, upBias, new Cesium.Cartesian3());
+
+          // Make the camera look at the meteor from the computed offset
+          viewer.camera.lookAt(cart, cameraOffset);
+        } catch {
+          // Silently ignore camera follow errors
+        }
 
         if (height <= target.height + 100) { // Larger threshold
           impactTriggered = true;
@@ -278,6 +310,17 @@ export default function MeteorSimulation({ viewer, params, target, start, bearin
       }
       
       try {
+        // Clear tracked entity first
+        try {
+          if (viewer && !viewer.isDestroyed()) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            viewer.trackedEntity = undefined;
+          }
+        } catch (e) {
+          console.warn('Could not clear trackedEntity during cleanup:', e);
+        }
+
         if (viewer && !viewer.isDestroyed()) {
           // Remove all simulation entities
           const entitiesToRemove = viewer.entities.values.filter((e: Entity) => 
