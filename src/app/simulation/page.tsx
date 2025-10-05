@@ -103,7 +103,7 @@ export default function SimulationPage() {
       {/* Top: controls + map */}
       <Grid container spacing={4} sx={{ mt: 2 }}>
         {/* Controls Panel */}
-        <Grid xs={12} lg={4}>
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Card>
             <CardContent sx={{ p: 4 }}>
               <Typography variant="h5" gutterBottom>
@@ -170,6 +170,7 @@ export default function SimulationPage() {
                   onClick={runSimulation}
                   sx={{ py: 1.5 }}
                   disabled={loading}
+                  suppressHydrationWarning
                 >
                   {loading ? 'Simulating…' : 'Run Simulation'}
                 </Button>
@@ -179,19 +180,21 @@ export default function SimulationPage() {
         </Grid>
 
         {/* Visualization Panel */}
-        <Grid xs={12} lg={8}>
-          <Card sx={{ height: { xs: 400, lg: 600 } }}>
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <Card sx={{ height: { xs: 500, lg: 700 } }}>
             <CardContent sx={{ p: 4, height: '100%' }}>
               <Typography variant="h5" gutterBottom>
                 Impact Visualization
               </Typography>
               <Box
                 sx={{
-                  height: 'calc(100% - 40px)',
+                  height: 'calc(100% - 60px)',
+                  minHeight: { xs: '350px', lg: '550px' },
                   borderRadius: 1,
                   overflow: 'hidden',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  border: '1px solid #dee2e6',
                   position: 'relative',
+                  backgroundColor: '#f8f9fa',
                 }}
               >
                 <MapView
@@ -215,7 +218,7 @@ export default function SimulationPage() {
 
       {/* Bottom: KPI cards */}
       <Grid container spacing={3} sx={{ mt: 4 }}>
-        <Grid xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent sx={{ textAlign: 'center', p: 4 }}>
               <Typography variant="h6" gutterBottom>
@@ -227,7 +230,7 @@ export default function SimulationPage() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent sx={{ textAlign: 'center', p: 4 }}>
               <Typography variant="h6" gutterBottom>
@@ -239,7 +242,7 @@ export default function SimulationPage() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent sx={{ textAlign: 'center', p: 4 }}>
               <Typography variant="h6" gutterBottom>
