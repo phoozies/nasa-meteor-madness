@@ -40,28 +40,25 @@ export default function SimulationPage() {
   const [results, setResults] = useState({
     energy: '---',
     craterDiameter: '---',
-    affectedArea: '---'
+    craterDepth: '---',
+    affectedArea: '---',
+    seismicMagnitude: '---',
+    windSpeed: '---',
   });
 
   // State for 2D map mode
   const [impactPoint, setImpactPoint] = useState<{ lon: number; lat: number } | null>(null);
   const [geojsonRings, setGeojsonRings] = useState<
-    { id: string; color?: string; opacity?: number; geojson: GeoJSON.GeoJSON }[]
+    { id: string; color?: string; opacity?: number; label?: string; description?: string; geojson: GeoJSON.GeoJSON }[]
   >([]);
   const [loading, setLoading] = useState(false);
 
   const runSimulation = async () => {
-    // Calculate basic metrics
+    // Calculate basic metrics for quick display
     const energy = (asteroidData.size * asteroidData.velocity * asteroidData.velocity / 1000).toFixed(1);
     const crater = (asteroidData.size * 0.1).toFixed(1);
     const area = (Math.PI * Math.pow(asteroidData.size * 0.5, 2) / 1000000).toFixed(1);
     
-    setResults({
-      energy: energy,
-      craterDiameter: crater,
-      affectedArea: area
-    });
-
     // For 2D mode, run detailed simulation
     if (viewMode === '2d') {
       if (!impactPoint) {
@@ -99,9 +96,29 @@ export default function SimulationPage() {
         }
         const data = await res.json();
         setGeojsonRings(data.rings || []);
+        
+        // Update results with detailed data from API
+        setResults({
+          energy: data.energy_MtTNT.toFixed(1),
+          craterDiameter: (data.crater_diameter_m / 1000).toFixed(2),
+          craterDepth: data.crater_depth_m ? (data.crater_depth_m / 1000).toFixed(2) : '---',
+          affectedArea: (Math.PI * Math.pow(data.crater_diameter_m / 2000, 2)).toFixed(1),
+          seismicMagnitude: data.seismic_magnitude ? data.seismic_magnitude.toFixed(1) : '---',
+          windSpeed: '~470', // From extreme blast zone
+        });
       } finally {
         setLoading(false);
       }
+    } else {
+      // For 3D mode, just show basic calculations
+      setResults({
+        energy: energy,
+        craterDiameter: crater,
+        craterDepth: (parseFloat(crater) * 0.15).toFixed(2),
+        affectedArea: area,
+        seismicMagnitude: '---',
+        windSpeed: '---',
+      });
     }
   };
 
@@ -265,38 +282,80 @@ export default function SimulationPage() {
       
       {/* Results Panel */}
       <Grid container spacing={3} sx={{ mt: 4 }}>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 6, lg: 2.4 }}>
           <Card>
-            <CardContent sx={{ textAlign: 'center', p: 4 }}>
-              <Typography variant="h6" gutterBottom>
+            <CardContent sx={{ textAlign: 'center', p: 3 }}>
+              <Typography variant="h6" gutterBottom sx={{ fontSize: '0.95rem' }}>
                 Impact Energy
               </Typography>
-              <Typography variant="h3" sx={{ color: 'error.main', fontWeight: 'bold' }}>
-                {results.energy} MT TNT
+              <Typography variant="h4" sx={{ color: 'error.main', fontWeight: 'bold' }}>
+                {results.energy}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                MT TNT
               </Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 6, lg: 2.4 }}>
           <Card>
-            <CardContent sx={{ textAlign: 'center', p: 4 }}>
-              <Typography variant="h6" gutterBottom>
-                Crater Diameter
+            <CardContent sx={{ textAlign: 'center', p: 3 }}>
+              <Typography variant="h6" gutterBottom sx={{ fontSize: '0.95rem' }}>
+                Crater Size
               </Typography>
-              <Typography variant="h3" sx={{ color: 'warning.main', fontWeight: 'bold' }}>
-                {results.craterDiameter} km
+              <Typography variant="h4" sx={{ color: 'warning.main', fontWeight: 'bold' }}>
+                {results.craterDiameter}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                km diameter
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                {results.craterDepth} km deep
               </Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 6, lg: 2.4 }}>
           <Card>
-            <CardContent sx={{ textAlign: 'center', p: 4 }}>
-              <Typography variant="h6" gutterBottom>
+            <CardContent sx={{ textAlign: 'center', p: 3 }}>
+              <Typography variant="h6" gutterBottom sx={{ fontSize: '0.95rem' }}>
+                Seismic Effects
+              </Typography>
+              <Typography variant="h4" sx={{ color: 'secondary.main', fontWeight: 'bold' }}>
+                {results.seismicMagnitude}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Magnitude
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid size={{ xs: 12, md: 6, lg: 2.4 }}>
+          <Card>
+            <CardContent sx={{ textAlign: 'center', p: 3 }}>
+              <Typography variant="h6" gutterBottom sx={{ fontSize: '0.95rem' }}>
+                Peak Wind Speed
+              </Typography>
+              <Typography variant="h4" sx={{ color: 'error.dark', fontWeight: 'bold' }}>
+                {results.windSpeed}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                mph
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid size={{ xs: 12, md: 6, lg: 2.4 }}>
+          <Card>
+            <CardContent sx={{ textAlign: 'center', p: 3 }}>
+              <Typography variant="h6" gutterBottom sx={{ fontSize: '0.95rem' }}>
                 Affected Area
               </Typography>
-              <Typography variant="h3" sx={{ color: 'info.main', fontWeight: 'bold' }}>
-                {results.affectedArea} km²
+              <Typography variant="h4" sx={{ color: 'info.main', fontWeight: 'bold' }}>
+                {results.affectedArea}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                km²
               </Typography>
             </CardContent>
           </Card>

@@ -23,3 +23,28 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Leaflet map styling enhancements */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.leaflet-popup-content {
+  margin: 8px 12px;
+  line-height: 1.5;
+}
+
+.impact-zone-label {
+  background-color: rgba(0, 0, 0, 0.75) !important;
+  border: none !important;
+  color: white !important;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.leaflet-tooltip.impact-zone-label::before {
+  display: none;
+}
