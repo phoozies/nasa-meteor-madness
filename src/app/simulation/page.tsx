@@ -41,28 +41,33 @@ export default function SimulationPage() {
   const [results, setResults] = useState({
     energy: '---',
     craterDiameter: '---',
-    affectedArea: '---'
+    craterDepth: '---',
+    affectedArea: '---',
+    seismicMagnitude: '---',
+    windSpeed: '---',
   });
+
+  // Detailed statistics from API
+  const [detailedStats, setDetailedStats] = useState<{
+    crater: string[];
+    shockwave: string[];
+    windBlast: string[];
+    seismic: string[];
+  } | null>(null);
 
   // State for 2D map mode
   const [impactPoint, setImpactPoint] = useState<{ lon: number; lat: number } | null>(null);
   const [geojsonRings, setGeojsonRings] = useState<
-    { id: string; color?: string; opacity?: number; geojson: GeoJSON.GeoJSON }[]
+    { id: string; color?: string; opacity?: number; label?: string; description?: string; geojson: GeoJSON.GeoJSON }[]
   >([]);
   const [loading, setLoading] = useState(false);
 
   const runSimulation = async () => {
-    // Calculate basic metrics
+    // Calculate basic metrics for quick display
     const energy = (asteroidData.size * asteroidData.velocity * asteroidData.velocity / 1000).toFixed(1);
     const crater = (asteroidData.size * 0.1).toFixed(1);
     const area = (Math.PI * Math.pow(asteroidData.size * 0.5, 2) / 1000000).toFixed(1);
     
-    setResults({
-      energy: energy,
-      craterDiameter: crater,
-      affectedArea: area
-    });
-
     // For 2D mode, run detailed simulation
     if (viewMode === '2d') {
       if (!impactPoint) {
@@ -74,7 +79,7 @@ export default function SimulationPage() {
         asteroidData.composition === 'metallic' ? 'iron' :
         asteroidData.composition === 'icy' ? 'cometary' : 'stony';
 
-      const density = material === 'iron' ? 7800 : material === 'cometary' ? 600 : 3000;
+      const density = material === 'iron' ? 7800 : material === 'cometary' ? 600 : 2600;
 
       const payload = {
         diameter_m: asteroidData.size,
@@ -100,9 +105,34 @@ export default function SimulationPage() {
         }
         const data = await res.json();
         setGeojsonRings(data.rings || []);
+        
+        // Update results with detailed data from API
+        setResults({
+          energy: data.energy_MtTNT.toFixed(1),
+          craterDiameter: (data.crater_diameter_m / 1000).toFixed(2),
+          craterDepth: data.crater_depth_m ? (data.crater_depth_m / 1000).toFixed(2) : '---',
+          affectedArea: (Math.PI * Math.pow(data.crater_diameter_m / 2000, 2)).toFixed(1),
+          seismicMagnitude: data.seismic_magnitude ? data.seismic_magnitude.toFixed(1) : '---',
+          windSpeed: '~470', // From extreme blast zone
+        });
+        
+        // Store detailed statistics
+        if (data.detailed_stats) {
+          setDetailedStats(data.detailed_stats);
+        }
       } finally {
         setLoading(false);
       }
+    } else {
+      // For 3D mode, just show basic calculations
+      setResults({
+        energy: energy,
+        craterDiameter: crater,
+        craterDepth: (parseFloat(crater) * 0.15).toFixed(2),
+        affectedArea: area,
+        seismicMagnitude: '---',
+        windSpeed: '---',
+      });
     }
   };
 
@@ -359,18 +389,81 @@ export default function SimulationPage() {
                 </Grid>
               </Grid>
               
-              {/* Additional Impact Information */}
-              <Box sx={{ mt: 'auto', p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  <strong>Impact Assessment:</strong>
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', lineHeight: 1.4 }}>
-                  • Atmospheric heating and fires{'\n'}
-                  • Debris ejection and fallout{'\n'}
-                  • Seismic activity potential{'\n'}
-                  • Infrastructure damage zones
-                </Typography>
-              </Box>
+              {/* Detailed Impact Statistics from API */}
+              {detailedStats && (
+                <Box sx={{ mt: 2, mb: 2 }}>
+                  {/* Crater Statistics */}
+                  {detailedStats.crater && detailedStats.crater.length > 0 && (
+                    <Box sx={{ mb: 2, p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#1e3a8a' }}>
+                        💥 Crater
+                      </Typography>
+                      {detailedStats.crater.map((stat, idx) => (
+                        <Typography key={idx} variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', lineHeight: 1.5, ml: 1 }}>
+                          • {stat}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+                  
+                  {/* Shockwave Statistics */}
+                  {detailedStats.shockwave && detailedStats.shockwave.length > 0 && (
+                    <Box sx={{ mb: 2, p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#dc2626' }}>
+                        💨 Shock Wave
+                      </Typography>
+                      {detailedStats.shockwave.map((stat, idx) => (
+                        <Typography key={idx} variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', lineHeight: 1.5, ml: 1 }}>
+                          • {stat}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+                  
+                  {/* Wind Blast Statistics */}
+                  {detailedStats.windBlast && detailedStats.windBlast.length > 0 && (
+                    <Box sx={{ mb: 2, p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#f97316' }}>
+                        🌪️ Wind Blast
+                      </Typography>
+                      {detailedStats.windBlast.map((stat, idx) => (
+                        <Typography key={idx} variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', lineHeight: 1.5, ml: 1 }}>
+                          • {stat}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+                  
+                  {/* Seismic Statistics */}
+                  {detailedStats.seismic && detailedStats.seismic.length > 0 && (
+                    <Box sx={{ mb: 2, p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#8b5cf6' }}>
+                        🌍 Seismic Effects
+                      </Typography>
+                      {detailedStats.seismic.map((stat, idx) => (
+                        <Typography key={idx} variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', lineHeight: 1.5, ml: 1 }}>
+                          • {stat}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+              )}
+              
+              {/* Generic Impact Information (shown when no detailed stats) */}
+              {!detailedStats && (
+                <Box sx={{ mt: 'auto', p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary" paragraph>
+                    <strong>Impact Assessment:</strong>
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', lineHeight: 1.4 }}>
+                    • Atmospheric heating and fires{'\n'}
+                    • Debris ejection and fallout{'\n'}
+                    • Seismic activity potential{'\n'}
+                    • Infrastructure damage zones
+                  </Typography>
+                </Box>
+              )}
               </Box>
             </CardContent>
           </Card>
