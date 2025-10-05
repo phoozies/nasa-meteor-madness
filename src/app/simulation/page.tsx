@@ -137,11 +137,7 @@ export default function SimulationPage() {
   };
 
   return (
-    <Box sx={{ backgroundColor: theme.palette.background.default, minHeight: '100vh', px: 4, py: 4 }}>
-      <Typography variant="h3" component="h1" textAlign="center" gutterBottom sx={{ mb: 4 }}>
-        Asteroid Impact Simulation
-      </Typography>
-        
+    <Box sx={{ backgroundColor: theme.palette.background.default, minHeight: '100vh', px: 4, py: 4 }}>        
       <Grid container spacing={3}>
         {/* Parameters Panel - Left Column */}
         <Grid size={{ xs: 12, xl: 3 }}>
@@ -252,7 +248,7 @@ export default function SimulationPage() {
             <CardContent sx={{ p: 3, height: '100%', overflow: 'hidden' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h5">
-                  Impact Visualization
+                  Asteroid Impact Visualization
                 </Typography>
                 <ToggleButtonGroup
                   value={viewMode}
