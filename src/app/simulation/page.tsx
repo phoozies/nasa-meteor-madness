@@ -21,6 +21,7 @@ import {
 import { PlayArrow, Public, Map } from '@mui/icons-material';
 import ParameterSlider from '@/components/ui/ParameterSlider';
 import MeteorSimulation from '@/components/simulation/MeteorSimulation';
+import { ImpactPhysics } from '@/lib/calculations/impactPhysics';
 import type { Viewer, Entity } from 'cesium';
 
 // Client-only components with proper typing
@@ -168,12 +169,18 @@ export default function SimulationPage() {
       markerRef.current = null;
     }
 
-    // Run impact calculations
-    const energy = (asteroidData.size * asteroidData.velocity ** 2 / 1000).toFixed(1);
-    const crater = (asteroidData.size * 0.1).toFixed(1);
-    const area = (Math.PI * Math.pow(asteroidData.size * 0.5, 2) / 1000000).toFixed(1);
-    
-    // For 2D mode, run detailed simulation
+    // Calculate impact using proper physics for both modes
+    const impactResults = ImpactPhysics.calculateImpact({
+      diameter: asteroidData.size,
+      velocity: asteroidData.velocity,
+      density: asteroidData.composition === 'metallic' ? 7800 : 
+               asteroidData.composition === 'icy' ? 600 : 2600,
+      angle: asteroidData.angle,
+      composition: asteroidData.composition,
+      targetDensity: 2500 // Default to land impact for 3D mode
+    });
+
+    // For 2D mode, run detailed simulation with API
     if (viewMode === '2d' && impactPoint) {
       const material =
         asteroidData.composition === 'metallic' ? 'iron' :
@@ -224,14 +231,16 @@ export default function SimulationPage() {
         setLoading(false);
       }
     } else if (viewMode === '3d') {
-      // For 3D mode, show basic calculations and run meteor simulation
+      // For 3D mode, use proper physics calculations
+      const affectedAreaKm2 = Math.PI * Math.pow(impactResults.craterDiameter / 2, 2);
+      
       setResults({
-        energy,
-        craterDiameter: crater,
-        craterDepth: (parseFloat(crater) * 0.15).toFixed(2),
-        affectedArea: area,
-        seismicMagnitude: '---',
-        windSpeed: '---',
+        energy: impactResults.energyMegatonsTNT.toFixed(1),
+        craterDiameter: impactResults.craterDiameter.toFixed(2),
+        craterDepth: impactResults.craterDepth.toFixed(2),
+        affectedArea: affectedAreaKm2.toFixed(1),
+        seismicMagnitude: impactResults.seismicMagnitude.toFixed(1),
+        windSpeed: '---', // Only available in detailed 2D simulation
       });
 
       // Launch meteor simulation
