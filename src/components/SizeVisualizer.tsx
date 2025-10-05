@@ -189,7 +189,7 @@ export default function SizeVisualizer() {
   return (
     <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, height: '100%' }}>
       {/* Left Controls */}
-      <Box sx={{ width: { xs: '100%', md: 350 }, flexShrink: 0 }}>
+      <Box sx={{ width: { xs: '100%', md: 500 }, flexShrink: 0 }}>
         <Card sx={{ 
           height: '100%',
           background: 'rgba(255, 255, 255, 0.05)',
