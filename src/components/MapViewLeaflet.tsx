@@ -44,6 +44,10 @@ export default function MapViewLeaflet({
   const [geoVersion, setGeoVersion] = useState(0);
   useEffect(() => { setGeoVersion(v => v + 1); }, [rings]);
 
+  // Collapse state for controls
+  const [layersExpanded, setLayersExpanded] = useState(true);
+  const [legendExpanded, setLegendExpanded] = useState(true);
+
   // Layer visibility toggles
   const [visibleLayers, setVisibleLayers] = useState({
     crater: true,
@@ -132,63 +136,80 @@ export default function MapViewLeaflet({
             top: '10px',
             right: '10px',
             backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            padding: '8px 10px',
+            padding: '6px 8px',
             borderRadius: '6px',
             zIndex: 1000,
             boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-            fontSize: '11px',
-            maxWidth: '140px'
+            fontSize: '10px',
+            maxWidth: '120px'
           }}
         >
-          <div style={{ fontWeight: 'bold', marginBottom: '6px', fontSize: '12px' }}>
-            Layers
+          <div 
+            style={{ 
+              fontWeight: 'bold', 
+              marginBottom: layersExpanded ? '4px' : '0', 
+              fontSize: '11px', 
+              color: '#1a1a1a',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer'
+            }}
+            onClick={() => setLayersExpanded(!layersExpanded)}
+          >
+            <span>Layers</span>
+            <span style={{ fontSize: '14px', marginLeft: '4px' }}>
+              {layersExpanded ? '▼' : '▶'}
+            </span>
           </div>
-          <FormGroup sx={{ gap: 0 }}>
-            <FormControlLabel
-              control={<Checkbox size="small" checked={visibleLayers.crater} onChange={() => toggleLayer('crater')} sx={{ padding: '2px' }} />}
-              label="Crater"
-              sx={{ 
-                margin: 0,
-                marginBottom: '2px',
-                '& .MuiFormControlLabel-label': { fontSize: '11px' } 
-              }}
-            />
-            <FormControlLabel
-              control={<Checkbox size="small" checked={visibleLayers.fireball} onChange={() => toggleLayer('fireball')} sx={{ padding: '2px' }} />}
-              label="Fireball"
-              sx={{ 
-                margin: 0,
-                marginBottom: '2px',
-                '& .MuiFormControlLabel-label': { fontSize: '11px' } 
-              }}
-            />
-            <FormControlLabel
-              control={<Checkbox size="small" checked={visibleLayers.blast} onChange={() => toggleLayer('blast')} sx={{ padding: '2px' }} />}
-              label="Blast Zones"
-              sx={{ 
-                margin: 0,
-                marginBottom: '2px',
-                '& .MuiFormControlLabel-label': { fontSize: '11px' } 
-              }}
-            />
-            <FormControlLabel
-              control={<Checkbox size="small" checked={visibleLayers.thermal} onChange={() => toggleLayer('thermal')} sx={{ padding: '2px' }} />}
-              label="Thermal"
-              sx={{ 
-                margin: 0,
-                marginBottom: '2px',
-                '& .MuiFormControlLabel-label': { fontSize: '11px' } 
-              }}
-            />
-            <FormControlLabel
-              control={<Checkbox size="small" checked={visibleLayers.seismic} onChange={() => toggleLayer('seismic')} sx={{ padding: '2px' }} />}
-              label="Seismic"
-              sx={{ 
-                margin: 0,
-                '& .MuiFormControlLabel-label': { fontSize: '11px' } 
-              }}
-            />
-          </FormGroup>
+          {layersExpanded && (
+            <FormGroup sx={{ gap: 0 }}>
+              <FormControlLabel
+                control={<Checkbox size="small" checked={visibleLayers.crater} onChange={() => toggleLayer('crater')} sx={{ padding: '2px', '& .MuiSvgIcon-root': { fontSize: '16px' } }} />}
+                label="Crater"
+                sx={{ 
+                  margin: 0,
+                  marginBottom: '1px',
+                  '& .MuiFormControlLabel-label': { fontSize: '10px', color: '#333' } 
+                }}
+              />
+              <FormControlLabel
+                control={<Checkbox size="small" checked={visibleLayers.fireball} onChange={() => toggleLayer('fireball')} sx={{ padding: '2px', '& .MuiSvgIcon-root': { fontSize: '16px' } }} />}
+                label="Fireball"
+                sx={{ 
+                  margin: 0,
+                  marginBottom: '1px',
+                  '& .MuiFormControlLabel-label': { fontSize: '10px', color: '#333' } 
+                }}
+              />
+              <FormControlLabel
+                control={<Checkbox size="small" checked={visibleLayers.blast} onChange={() => toggleLayer('blast')} sx={{ padding: '2px', '& .MuiSvgIcon-root': { fontSize: '16px' } }} />}
+                label="Blast Zones"
+                sx={{ 
+                  margin: 0,
+                  marginBottom: '1px',
+                  '& .MuiFormControlLabel-label': { fontSize: '10px', color: '#333' } 
+                }}
+              />
+              <FormControlLabel
+                control={<Checkbox size="small" checked={visibleLayers.thermal} onChange={() => toggleLayer('thermal')} sx={{ padding: '2px', '& .MuiSvgIcon-root': { fontSize: '16px' } }} />}
+                label="Thermal"
+                sx={{ 
+                  margin: 0,
+                  marginBottom: '1px',
+                  '& .MuiFormControlLabel-label': { fontSize: '10px', color: '#333' } 
+                }}
+              />
+              <FormControlLabel
+                control={<Checkbox size="small" checked={visibleLayers.seismic} onChange={() => toggleLayer('seismic')} sx={{ padding: '2px', '& .MuiSvgIcon-root': { fontSize: '16px' } }} />}
+                label="Seismic"
+                sx={{ 
+                  margin: 0,
+                  '& .MuiFormControlLabel-label': { fontSize: '10px', color: '#333' } 
+                }}
+              />
+            </FormGroup>
+          )}
         </div>
       )}
       
@@ -200,33 +221,48 @@ export default function MapViewLeaflet({
             bottom: '30px',
             right: '10px',
             backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            padding: '12px',
-            borderRadius: '8px',
+            padding: '8px 10px',
+            borderRadius: '6px',
             zIndex: 1000,
-            maxHeight: '300px',
+            maxHeight: legendExpanded ? '250px' : 'auto',
             overflowY: 'auto',
             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-            fontSize: '12px',
-            minWidth: '200px'
+            fontSize: '10px',
+            minWidth: '160px'
           }}
         >
-          <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '13px' }}>
-            Impact Effects
+          <div 
+            style={{ 
+              fontWeight: 'bold', 
+              marginBottom: legendExpanded ? '6px' : '0', 
+              fontSize: '11px', 
+              color: '#1a1a1a',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer'
+            }}
+            onClick={() => setLegendExpanded(!legendExpanded)}
+          >
+            <span>Impact Effects</span>
+            <span style={{ fontSize: '14px', marginLeft: '4px' }}>
+              {legendExpanded ? '▼' : '▶'}
+            </span>
           </div>
-          {visibleRings.map((r) => (
+          {legendExpanded && visibleRings.map((r) => (
             <div 
               key={r.id} 
               style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
-                marginBottom: '6px',
-                gap: '8px'
+                marginBottom: '4px',
+                gap: '6px'
               }}
             >
               <div 
                 style={{
-                  width: '16px',
-                  height: '16px',
+                  width: '12px',
+                  height: '12px',
                   backgroundColor: r.color || '#ef4444',
                   opacity: (r.opacity ?? 0.18) + 0.5,
                   borderRadius: '2px',
@@ -234,10 +270,10 @@ export default function MapViewLeaflet({
                   flexShrink: 0
                 }}
               />
-              <div style={{ fontSize: '11px', lineHeight: '1.3' }}>
-                <div style={{ fontWeight: '500' }}>{r.label || r.id}</div>
+              <div style={{ fontSize: '10px', lineHeight: '1.2' }}>
+                <div style={{ fontWeight: '500', color: '#1a1a1a' }}>{r.label || r.id}</div>
                 {r.description && (
-                  <div style={{ color: '#666', fontSize: '10px' }}>
+                  <div style={{ color: '#555', fontSize: '9px' }}>
                     {r.description}
                   </div>
                 )}
