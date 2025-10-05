@@ -137,7 +137,10 @@ export default function SimulationPage() {
     setResults({
       energy,
       craterDiameter: crater,
+      craterDepth: '---',
       affectedArea: area,
+      seismicMagnitude: '---',
+      windSpeed: '---',
     });
 
     // Launch meteor simulation
@@ -146,12 +149,8 @@ export default function SimulationPage() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Typography variant="h3" component="h1" textAlign="center" gutterBottom>
-        Asteroid Impact Simulation
-      </Typography>
-
-      <Grid container spacing={4} sx={{ mt: 2 }}>
+    <Box sx={{ backgroundColor: theme.palette.background.default, minHeight: '100vh', px: 4, py: 4 }}>
+      <Grid container spacing={3}>
         {/* Controls Panel */}
         <Grid size={{ xs: 12, lg: 4 }}>
           <Card>
@@ -300,6 +299,6 @@ export default function SimulationPage() {
           </Card>
         </Grid>
       </Grid>
-    </Container>
+    </Box>
   );
 }
