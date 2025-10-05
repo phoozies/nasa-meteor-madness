@@ -90,7 +90,7 @@ export default function NeoSelector({ onAsteroidSelect, selectedAsteroid }: NeoS
   }
 
   return (
-    <Box sx={{ mb: 3 }}>
+    <Box sx={{ mt: 2, mb: 3 }}>
       <FormControl fullWidth>
         <InputLabel>Select from NEO Data</InputLabel>
         <Select
