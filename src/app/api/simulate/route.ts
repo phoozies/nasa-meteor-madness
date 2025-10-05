@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  craterDiameterMeters,
   deflectionOffsetMeters,
   impactEnergy,
   overpressureRadiiMeters,
@@ -11,6 +10,59 @@ import * as turf from '@turf/turf';
 
 // Force Node runtime (turf works best here)
 export const runtime = 'nodejs';
+
+/**
+ * Simple water detection based on coordinates
+ * Returns true if coordinates are likely over water
+ */
+function isOverWater(lon: number, lat: number): boolean {
+  // Pacific Ocean: large area between Americas and Asia
+  // Western Pacific: lon > 120 to 180
+  if (lon > 120 && lon <= 180 && lat > -60 && lat < 60) {
+    // Exclude Asia/Australia  
+    if (lon > 120 && lon < 155 && lat > -10 && lat < 50) return false; // Asia
+    if (lon > 110 && lon < 155 && lat > -45 && lat < -10) return false; // Australia
+    return true;
+  }
+  
+  // Eastern Pacific: lon < -70 to -180
+  if (lon < -70 && lon >= -180 && lat > -60 && lat < 60) {
+    // Exclude Americas (much narrower band)
+    if (lon > -130 && lon < -65 && lat > 15 && lat < 72) return false; // North America
+    if (lon > -82 && lon < -34 && lat > -56 && lat < 15) return false; // South America
+    return true;
+  }
+  
+  // Atlantic Ocean: between Americas and Europe/Africa
+  if (lon > -70 && lon < 20 && lat > -60 && lat < 70) {
+    // Americas (east coast) - narrower band
+    if (lon > -82 && lon < -65 && lat > 5 && lat < 50) return false; // Eastern US
+    if (lon > -80 && lon < -34 && lat > -56 && lat < 15) return false; // South America
+    // Europe/Africa
+    if (lon > -10 && lon < 40 && lat > -35 && lat < 72) return false; // Europe/Africa
+    return true;
+  }
+  
+  // Indian Ocean
+  if (lon > 20 && lon < 120 && lat > -60 && lat < 30) {
+    // Africa (east coast)
+    if (lon > 20 && lon < 52 && lat > -35 && lat < 40) return false;
+    // India
+    if (lon > 68 && lon < 97 && lat > 8 && lat < 37) return false;
+    // Southeast Asia
+    if (lon > 95 && lon < 120 && lat > -10 && lat < 30) return false;
+    return true;
+  }
+  
+  // Southern Ocean (around Antarctica)
+  if (lat < -60) return true;
+  
+  // Arctic Ocean
+  if (lat > 72) return true;
+  
+  // Default to land
+  return false;
+}
 
 type Payload = {
   diameter_m: number;
@@ -47,7 +99,12 @@ export async function POST(req: NextRequest) {
     }
 
     const { E, MtTNT } = impactEnergy(body.diameter_m, body.density, body.speed_ms);
-    const craterD = craterDiameterMeters(body.diameter_m, body.density, body.speed_ms, body.angle_deg);
+    
+    // Detect if impact is over water or land
+    const isWater = isOverWater(body.lon, body.lat);
+    const targetDensity = isWater ? 1000 : 2500; // kg/m³ (water vs rock)
+    const targetType = isWater ? 'water' : 'land';
+    
     const over = overpressureRadiiMeters(MtTNT);
     const thermalR = thermalRadiusMeters(MtTNT);
 
@@ -57,7 +114,8 @@ export async function POST(req: NextRequest) {
       velocity: body.speed_ms / 1000, // m/s to km/s
       density: body.density,
       angle: body.angle_deg,
-      composition: body.material === 'iron' ? 'metallic' : body.material === 'cometary' ? 'icy' : 'rocky'
+      composition: body.material === 'iron' ? 'metallic' : body.material === 'cometary' ? 'icy' : 'rocky',
+      targetDensity: targetDensity
     });
 
     // Calculate wind speed zones (based on overpressure)
@@ -90,7 +148,7 @@ export async function POST(req: NextRequest) {
     
     // Calculate detailed statistics FIRST (before rings)
     // 1. Crater statistics
-    const craterWidthKm = craterD / 1000;
+    const craterWidthKm = detailedResults.craterDiameter; // Already in km
     const craterDepthM = detailedResults.craterDepth * 1000;
 
     // 2. Shock wave statistics
@@ -131,15 +189,26 @@ export async function POST(req: NextRequest) {
     const comparison = MtTNT > tunguska ? 'More' : 'Less';
 
     // Detailed descriptions for each zone
+    const craterDescriptions = isWater ? [
+      `${craterWidthKm.toFixed(1)} km wide crater`,
+      `The crater is ${Math.round(craterDepthM)} m deep on the sea floor`,
+      detailedResults.tsunamiHeight ? `The impact will create a ${Math.round(detailedResults.tsunamiHeight)} m tall tsunami` : '',
+      `Your asteroid impacted the water at ${(body.speed_ms / 1000).toFixed(0)} km/s`,
+      `The impact is equivalent to ${Math.round(MtTNT)} Megatons of TNT`,
+      `${comparison} energy was released than Tunguska explosion`,
+      `An impact this size happens on average every ${impactFrequencyYears.toLocaleString()} years`
+    ].filter(Boolean) : [
+      `${craterWidthKm.toFixed(1)} km wide crater`,
+      `The crater is ${Math.round(craterDepthM)} m deep`,
+      `Impact into ${targetType} (${targetDensity} kg/m³)`,
+      `Your asteroid impacted the ground at ${(body.speed_ms / 1000).toFixed(0)} km/s`,
+      `The impact is equivalent to ${Math.round(MtTNT)} Megatons of TNT`,
+      `${comparison} energy was released than Tunguska explosion`,
+      `An impact this size happens on average every ${impactFrequencyYears.toLocaleString()} years`
+    ];
+    
     const detailedDescriptions = {
-      crater: [
-        `${craterWidthKm.toFixed(1)} km wide crater`,
-        `The crater is ${Math.round(craterDepthM)} m deep`,
-        `Your asteroid impacted the ground at ${(body.speed_ms / 1000).toFixed(0)} km/s`,
-        `The impact is equivalent to ${Math.round(MtTNT)} Megatons of TNT`,
-        `${comparison} energy was released than Tunguska explosion`,
-        `An impact this size happens on average every ${impactFrequencyYears.toLocaleString()} years`
-      ],
+      crater: craterDescriptions,
       shockwave: [
         `${shockwaveDecibels} decibel shock wave`,
         `Anyone within ${(lungDamageRadius / 1000).toFixed(1)} km would likely receive lung damage`,
@@ -223,15 +292,15 @@ export async function POST(req: NextRequest) {
     }));
 
     // Create crater as a separate, more visible feature
-    const crater = turf.buffer(center, craterD / 2000, { units: 'kilometers' });
+    const crater = turf.buffer(center, craterWidthKm / 2, { units: 'kilometers' });
     
     // Create fireball/explosion radius (immediate vaporization zone)
-    const fireballRadius = craterD * 0.8; // Slightly smaller than crater
-    const fireball = turf.buffer(center, fireballRadius / 2000, { units: 'kilometers' });
+    const fireballRadius = craterWidthKm * 0.8; // Slightly smaller than crater
+    const fireball = turf.buffer(center, fireballRadius / 2, { units: 'kilometers' });
 
     return NextResponse.json({
       energy_MtTNT: MtTNT,
-      crater_diameter_m: craterD,
+      crater_diameter_m: craterWidthKm * 1000, // Convert back to meters for API response
       crater_depth_m: craterDepthM,
       seismic_magnitude: detailedResults.seismicMagnitude,
       thermal_radius_km: detailedResults.thermalRadius,

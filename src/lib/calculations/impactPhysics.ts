@@ -9,6 +9,7 @@ export interface AsteroidProperties {
   density?: number; // kg/m³ (default: 3000 for rocky asteroids)
   angle?: number; // impact angle in degrees (default: 45)
   composition?: 'rocky' | 'metallic' | 'icy';
+  targetDensity?: number; // kg/m³ (default: 2500 for rock, 1000 for water)
 }
 
 export interface ImpactResults {
@@ -27,6 +28,8 @@ export interface ImpactResults {
   mass: number; // kg
   momentum: number; // kg⋅m/s
   angularMomentum: number; // kg⋅m²/s
+  tsunamiHeight?: number; // meters (only for water impacts)
+  isWaterImpact?: boolean; // whether this was a water impact
 }
 
 // Constants from team member's equations
@@ -82,8 +85,9 @@ export class ImpactPhysics {
   }
   
   /**
-   * Calculate transient crater diameter for solid ground
-   * Dtc_solid = 1.161 * ((ρ_i / ρ_t)^(1/3)) * (L^0.78) * ((vi^0.44) / (gE^0.22)) * ((sin(φ))^(1/3))
+   * Calculate transient crater diameter
+   * For land: Dtc_solid = 1.161 * ((ρ_i / ρ_t)^(1/3)) * (L^0.78) * ((vi^0.44) / (gE^0.22)) * ((sin(φ))^(1/3))
+   * For water: Sea floor crater is much smaller due to water absorption
    */
   static calculateTransientCraterDiameter(
     impactorDiameter: number, // meters
@@ -96,13 +100,20 @@ export class ImpactPhysics {
     const angleRad = (angle * Math.PI) / 180;
     const sinAngle = Math.sin(angleRad);
     
-    const coefficient = isWater ? 1.365 : 1.161;
+    // Calculate base crater for land
+    const effectiveTargetDensity = 2500; // Use land density for base calculation
+    const coefficient = 1.161;
     
-    const Dtc = coefficient * 
-      Math.pow(impactorDensity / targetDensity, 1/3) * 
+    const DtcLand = coefficient * 
+      Math.pow(impactorDensity / effectiveTargetDensity, 1/3) * 
       Math.pow(impactorDiameter, 0.78) * 
       Math.pow(velocity, 0.44) / Math.pow(gE, 0.22) * 
       Math.pow(sinAngle, 1/3);
+    
+    // For water impacts, apply empirical scaling factor
+    // Neal.fun data shows water craters are ~16% the size of land craters
+    // This accounts for water absorption and different impact mechanics
+    const Dtc = isWater ? DtcLand * 0.161 : DtcLand;
     
     return Dtc; // meters
   }
@@ -201,6 +212,23 @@ export class ImpactPhysics {
   }
   
   /**
+   * Calculate tsunami height for water impacts
+   * Based on empirical data from neal.fun and impact studies
+   * Tsunami height scales with energy and impact parameters
+   */
+  static calculateTsunamiHeight(
+    diameter: number, // meters
+    velocity: number, // m/s
+    energyMT: number
+  ): number {
+    // Empirical formula calibrated to neal.fun:
+    // 100m @ 20km/s (65 MT) → 201m tsunami
+    // Scaling: h ∝ D^0.5 * v^0.5 (approximate)
+    const baseHeight = Math.pow(diameter / 100, 0.5) * Math.pow(velocity / 20000, 0.5) * 201;
+    return baseHeight; // meters
+  }
+  
+  /**
    * Calculate linear momentum: Mi = mi * vi
    */
   static calculateLinearMomentum(mass: number, velocity: number): number {
@@ -223,7 +251,8 @@ export class ImpactPhysics {
       diameter,
       velocity,
       density = this.getDefaultDensity(asteroid.composition || 'rocky'),
-      angle = 45
+      angle = 45,
+      targetDensity: providedTargetDensity
     } = asteroid;
     
     // Convert velocity from km/s to m/s
@@ -239,14 +268,18 @@ export class ImpactPhysics {
     const angularMomentum = this.calculateAngularMomentum(mass, velocityMs, angle);
     
     // Calculate crater dimensions using team member's equations
-    const targetDensity = this.getTargetDensity(false); // solid ground
+    // Use provided target density if available, otherwise default to solid ground
+    const targetDensity = providedTargetDensity ?? this.getTargetDensity(false);
+    // Determine if this is a water impact based on target density
+    const isWater = targetDensity <= 1000; // Water has density ~1000 kg/m³
+    
     const transientCraterDiameter = this.calculateTransientCraterDiameter(
       diameter,
       density,
       velocityMs,
       angle,
       targetDensity,
-      false
+      isWater
     );
     
     const finalCraterDiameter = this.calculateFinalCraterDiameter(transientCraterDiameter);
@@ -268,6 +301,9 @@ export class ImpactPhysics {
     const thermalRadius = this.calculateThermalRadius(energy);
     const overpressureRadius = this.calculateOverpressureRadius(energy);
     
+    // Calculate tsunami for water impacts
+    const tsunamiHeight = isWater ? this.calculateTsunamiHeight(diameter, velocityMs, energyMT) : undefined;
+    
     return {
       energy,
       energyMegatonsTNT: energyMT,
@@ -283,7 +319,9 @@ export class ImpactPhysics {
       overpressureRadius,
       mass,
       momentum: linearMomentum,
-      angularMomentum
+      angularMomentum,
+      tsunamiHeight,
+      isWaterImpact: isWater
     };
   }
 }
