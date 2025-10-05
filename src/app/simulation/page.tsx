@@ -127,7 +127,29 @@ export default function SimulationPage() {
                 Impact Parameters
               </Typography>
                 
-                <Box sx={{ mt: 3, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto', pr: 1 }}>
+                <Box sx={{ 
+                  mt: 3, 
+                  flex: 1, 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  overflow: 'auto',
+                  pr: 0.5,
+                  '&::-webkit-scrollbar': {
+                    width: '6px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    background: 'transparent',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                    borderRadius: '3px',
+                    '&:hover': {
+                      backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
+                    },
+                  },
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2) transparent' : 'rgba(0, 0, 0, 0.2) transparent',
+                }}>
                   <ParameterSlider
                     label="Asteroid Size"
                     value={asteroidData.size}
@@ -278,7 +300,26 @@ export default function SimulationPage() {
               </Typography>
               
               {/* Quick Results Cards */}
-              <Box sx={{ flex: 1, overflow: 'auto', pr: 1 }}>
+              <Box sx={{ 
+                flex: 1, 
+                overflow: 'auto', 
+                pr: 0.5,
+                '&::-webkit-scrollbar': {
+                  width: '6px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: 'transparent',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                  borderRadius: '3px',
+                  '&:hover': {
+                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
+                  },
+                },
+                scrollbarWidth: 'thin',
+                scrollbarColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2) transparent' : 'rgba(0, 0, 0, 0.2) transparent',
+              }}>
               <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid size={12}>
                   <Card variant="outlined">
