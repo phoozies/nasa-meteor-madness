@@ -140,6 +140,17 @@ export default function Navigation() {
                   alignItems: 'center' 
                 }}
               >
+                {/* Custom Meteor Madness Logo */}
+                <Box
+                  component="img"
+                  src="/meteor-madness-logo.png"
+                  alt="Meteor Madness Logo"
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    mr: 2,
+                  }}
+                />
                 <Typography 
                   variant="h6" 
                   component="div" 
