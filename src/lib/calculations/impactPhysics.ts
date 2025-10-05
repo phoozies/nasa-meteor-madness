@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Asteroid Impact Physics Calculations
  * Based on professional team member's equations and scaling relationships
@@ -33,11 +34,8 @@ export interface ImpactResults {
 }
 
 // Constants from team member's equations
-const ME = 5.83e24;        // kg, mass of Earth
 const RE = 6.371e6;        // m, radius of Earth
 const gE = 9.81;           // m/s^2, surface gravity
-const VE = 1.083e12;       // km^3, volume of Earth
-const vE = 29.78e3;        // m/s, orbital velocity of Earth
 const εm = 5.2e6;          // J/kg, specific energy of melt for granite
 const MT = 4.184e15;       // J per megaton TNT equivalent
 
