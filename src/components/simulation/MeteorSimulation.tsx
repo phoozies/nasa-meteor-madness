@@ -74,15 +74,25 @@ export default function MeteorSimulation({ viewer, params, target, start, bearin
       const endTime: JulianDate = Cesium.JulianDate.addSeconds(startTime, flightDuration, new Cesium.JulianDate());
 
       // Remove previous meteor/crater/explosion
-      viewer.entities.values
-        .filter((e: Entity) => e.name && ["Meteor", "Crater", "Explosion"].includes(e.name))
-        .forEach((e) => viewer.entities.remove(e));
+      if (viewer && !viewer.isDestroyed()) {
+        viewer.entities.values
+          .filter((e: Entity) => e.name && ["Meteor", "Crater", "Explosion"].includes(e.name))
+          .forEach((e) => {
+            try {
+              viewer.entities.remove(e);
+            } catch (error) {
+              console.warn('Error removing entity:', error);
+            }
+          });
+      }
 
       position = new Cesium.SampledPositionProperty();
       position.addSample(startTime, startPos);
       position.addSample(endTime, endPos);
 
-  meteorEntity = viewer.entities.add({
+  if (!viewer || viewer.isDestroyed()) return;
+      
+      meteorEntity = viewer.entities.add({
         name: "Meteor",
         position,
         point: {
@@ -143,6 +153,8 @@ export default function MeteorSimulation({ viewer, params, target, start, bearin
           }
 
           // Crater - make it much more visible
+          if (!viewer || viewer.isDestroyed()) return;
+          
           viewer.entities.add({
             name: "Crater",
             position: groundPos,
@@ -160,6 +172,8 @@ export default function MeteorSimulation({ viewer, params, target, start, bearin
           });
 
           // Explosion - improved animation
+          if (!viewer || viewer.isDestroyed()) return;
+          
           explosionEntity = viewer.entities.add({
             name: "Explosion",
             position: groundPos,
@@ -205,20 +219,30 @@ export default function MeteorSimulation({ viewer, params, target, start, bearin
           });
 
           // Camera focus on impact area with better positioning
-          viewer.camera.flyTo({
-            destination: Cesium.Cartesian3.fromDegrees(lon, lat - .05, Math.max(craterRadius * 20, 20000)),
-            duration: 2.0,
-            orientation: {
-              heading: Cesium.Math.toRadians(0.0),
-              pitch: Cesium.Math.toRadians(-75.0), // Slightly angled view
-              roll: 0.0
+          if (viewer && !viewer.isDestroyed()) {
+            try {
+              viewer.camera.flyTo({
+                destination: Cesium.Cartesian3.fromDegrees(lon, lat - .1, Math.max(craterRadius * 20, 20000)),
+                duration: 2.0,
+                orientation: {
+                  heading: Cesium.Math.toRadians(0.0),
+                  pitch: Cesium.Math.toRadians(-75.0), // Slightly angled view
+                  roll: 0.0
+                }
+              });
+            } catch (error) {
+              console.warn('Error setting camera focus:', error);
             }
-          });
+          }
 
           // Remove explosion after animation completes
           setTimeout(() => {
-            if (explosionEntity && viewer.entities.contains(explosionEntity)) {
-              viewer.entities.remove(explosionEntity);
+            try {
+              if (explosionEntity && viewer && !viewer.isDestroyed() && viewer.entities.contains(explosionEntity)) {
+                viewer.entities.remove(explosionEntity);
+              }
+            } catch (error) {
+              console.warn('Error removing explosion entity:', error);
             }
           }, 8000); // 8 seconds to see full animation
         } catch (error) {
@@ -251,25 +275,28 @@ export default function MeteorSimulation({ viewer, params, target, start, bearin
         const height = carto.height;
 
         // Camera follow logic: position the camera behind the meteor along its flight vector
-        try {
-          // compute direction from current position to end position
-          const dir = Cesium.Cartesian3.subtract(endPos, cart, new Cesium.Cartesian3());
-          Cesium.Cartesian3.normalize(dir, dir);
+        if (viewer && !viewer.isDestroyed()) {
+          try {
+            // compute direction from current position to end position
+            const dir = Cesium.Cartesian3.subtract(endPos, cart, new Cesium.Cartesian3());
+            Cesium.Cartesian3.normalize(dir, dir);
 
-          const distanceToEnd = Cesium.Cartesian3.distance(cart, endPos);
-          // followDistance depends on remaining distance but clamped for UX
-          // Increase distance and upward bias so the camera stays more zoomed-out
-          const followDistance = Math.max(15000, Math.min(300000, distanceToEnd * 0.75));
+            const distanceToEnd = Cesium.Cartesian3.distance(cart, endPos);
+            // followDistance depends on remaining distance but clamped for UX
+            // Increase distance and upward bias so the camera stays more zoomed-out
+            const followDistance = Math.max(15000, Math.min(300000, distanceToEnd * 0.75));
 
-          // camera offset = -dir * followDistance (behind the meteor) + larger upward bias
-          const behind = Cesium.Cartesian3.multiplyByScalar(dir, -followDistance, new Cesium.Cartesian3());
-          const upBias = new Cesium.Cartesian3(0, 0, Math.max(5000, followDistance * 0.25));
-          const cameraOffset = Cesium.Cartesian3.add(behind, upBias, new Cesium.Cartesian3());
+            // camera offset = -dir * followDistance (behind the meteor) + larger upward bias
+            const behind = Cesium.Cartesian3.multiplyByScalar(dir, -followDistance, new Cesium.Cartesian3());
+            const upBias = new Cesium.Cartesian3(0, 0, Math.max(5000, followDistance * 0.25));
+            const cameraOffset = Cesium.Cartesian3.add(behind, upBias, new Cesium.Cartesian3());
 
-          // Make the camera look at the meteor from the computed offset
-          viewer.camera.lookAt(cart, cameraOffset);
-        } catch {
-          // Silently ignore camera follow errors
+            // Make the camera look at the meteor from the computed offset
+            viewer.camera.lookAt(cart, cameraOffset);
+          } catch (error) {
+            // Silently ignore camera follow errors
+            console.warn('Camera follow error:', error);
+          }
         }
 
         if (height <= target.height + 100) { // Larger threshold
@@ -278,26 +305,36 @@ export default function MeteorSimulation({ viewer, params, target, start, bearin
         }
       };
 
-      viewer.clock.onTick.addEventListener(tickListener);
+      if (viewer && !viewer.isDestroyed() && tickListener) {
+        viewer.clock.onTick.addEventListener(tickListener);
+      }
 
       // Clock setup - improved timing
-      viewer.clock.startTime = startTime.clone();
-      viewer.clock.stopTime = Cesium.JulianDate.addSeconds(endTime, 10, new Cesium.JulianDate()); // Extra time for impact effects
-      viewer.clock.currentTime = startTime.clone();
-      viewer.clock.multiplier = 1;
-      viewer.clock.shouldAnimate = true;
-      viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP; // Stop at end instead of looping
+      if (viewer && !viewer.isDestroyed()) {
+        viewer.clock.startTime = startTime.clone();
+        viewer.clock.stopTime = Cesium.JulianDate.addSeconds(endTime, 10, new Cesium.JulianDate()); // Extra time for impact effects
+        viewer.clock.currentTime = startTime.clone();
+        viewer.clock.multiplier = 1;
+        viewer.clock.shouldAnimate = true;
+        viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP; // Stop at end instead of looping
+      }
 
       // Position camera to see both meteor approach and impact
-      viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(target.lon, target.lat - 3, 500000), // Closer view
-        duration: 1.0,
-        orientation: {
-          heading: Cesium.Math.toRadians(0.0),
-          pitch: Cesium.Math.toRadians(-60.0), // Better angle for viewing
-          roll: 0.0
+      if (viewer && !viewer.isDestroyed()) {
+        try {
+          viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(target.lon, target.lat - 3, 500000), // Closer view
+            duration: 1.0,
+            orientation: {
+              heading: Cesium.Math.toRadians(0.0),
+              pitch: Cesium.Math.toRadians(-60.0), // Better angle for viewing
+              roll: 0.0
+            }
+          });
+        } catch (error) {
+          console.warn('Error positioning camera:', error);
         }
-      });
+      }
     };
 
     runMeteor();

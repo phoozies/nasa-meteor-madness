@@ -21,11 +21,11 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: '/meteor-madness-logo.png',
+        url: '/Meteor_madness.png',
         type: 'image/png',
       },
     ],
-    shortcut: '/meteor-madness-logo.png',
+    shortcut: '/Meteor_madness.png',
   },
   keywords: ['NASA', 'asteroid', 'meteor', 'impact simulation', 'planetary defense', 'space apps challenge'],
   authors: [{ name: 'NASA Space Apps Challenge Team' }],
