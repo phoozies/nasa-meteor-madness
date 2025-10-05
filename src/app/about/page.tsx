@@ -1,20 +1,24 @@
+'use client';
+
 import {
-  Container,
+  Box,
   Typography,
   Card,
   CardContent,
   Button,
   Stack,
   Avatar,
+  useTheme,
 } from '@mui/material';
 import {
   Launch,
 } from '@mui/icons-material';
 
 export default function AboutPage() {
+  const theme = useTheme();
 
   return (
-    <Container maxWidth="lg" sx={{ py: 6 }}>
+    <Box sx={{ px: 4, py: 6, backgroundColor: theme.palette.background.default }}>
       <Typography variant="h3" component="h1" textAlign="center" gutterBottom>
         About Meteor Madness
       </Typography>
@@ -71,6 +75,6 @@ export default function AboutPage() {
           </Button>
         </CardContent>
       </Card>
-    </Container>
+    </Box>
   );
 }

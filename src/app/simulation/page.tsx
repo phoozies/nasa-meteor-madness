@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic';
 import type { MapViewProps } from '@/components/MapViewLeaflet';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -17,6 +16,7 @@ import {
   MenuItem,
   ToggleButtonGroup,
   ToggleButton,
+  useTheme,
 } from '@mui/material';
 import { PlayArrow, Public, Map } from '@mui/icons-material';
 import ParameterSlider from '@/components/ui/ParameterSlider';
@@ -30,6 +30,7 @@ const MapView = dynamic<MapViewProps>(
 
 export default function SimulationPage() {
   const [viewMode, setViewMode] = useState<'3d' | '2d'>('3d');
+  const theme = useTheme();
   const [asteroidData, setAsteroidData] = useState({
     size: 100, // meters
     velocity: 20, // km/s
@@ -136,53 +137,81 @@ export default function SimulationPage() {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Typography variant="h3" component="h1" textAlign="center" gutterBottom>
+    <Box sx={{ backgroundColor: theme.palette.background.default, minHeight: '100vh', px: 4, py: 4 }}>
+      <Typography variant="h3" component="h1" textAlign="center" gutterBottom sx={{ mb: 4 }}>
         Asteroid Impact Simulation
       </Typography>
-      
-      <Grid container spacing={4} sx={{ mt: 2 }}>
-        {/* Controls Panel */}
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Card>
-            <CardContent sx={{ p: 4 }}>
-              <Typography variant="h5" gutterBottom>
+        
+      <Grid container spacing={3}>
+        {/* Parameters Panel - Left Column */}
+        <Grid size={{ xs: 12, xl: 3 }}>
+          <Card sx={{ height: { xs: 'auto', xl: 700 } }}>
+            <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <Typography 
+                variant="h5" 
+                sx={{ 
+                  fontWeight: 600, 
+                  mb: 3,
+                }}
+              >
                 Impact Parameters
               </Typography>
-              
-              <Box sx={{ mt: 3 }}>
-                <ParameterSlider
-                  label="Asteroid Size"
-                  value={asteroidData.size}
-                  min={10}
-                  max={1000}
-                  step={10}
-                  unit=" m"
-                  onChange={(value) => setAsteroidData({...asteroidData, size: value})}
-                  description="Diameter of the asteroid in meters"
-                />
                 
-                <ParameterSlider
-                  label="Impact Velocity"
-                  value={asteroidData.velocity}
-                  min={5}
-                  max={50}
-                  step={1}
-                  unit=" km/s"
-                  onChange={(value) => setAsteroidData({...asteroidData, velocity: value})}
-                  description="Speed at which the asteroid impacts Earth"
-                />
-                
-                <ParameterSlider
-                  label="Impact Angle"
-                  value={asteroidData.angle}
-                  min={0}
-                  max={90}
-                  step={1}
-                  unit="°"
-                  onChange={(value) => setAsteroidData({...asteroidData, angle: value})}
-                  description="Angle of impact relative to Earth's surface"
-                />
+                <Box sx={{ 
+                  mt: 3, 
+                  flex: 1, 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  overflow: 'auto',
+                  pr: 0.5,
+                  '&::-webkit-scrollbar': {
+                    width: '6px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    background: 'transparent',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                    borderRadius: '3px',
+                    '&:hover': {
+                      backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
+                    },
+                  },
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2) transparent' : 'rgba(0, 0, 0, 0.2) transparent',
+                }}>
+                  <ParameterSlider
+                    label="Asteroid Size"
+                    value={asteroidData.size}
+                    min={10}
+                    max={1000}
+                    step={10}
+                    unit=" m"
+                    onChange={(value) => setAsteroidData({...asteroidData, size: value})}
+                    description="Diameter of the asteroid in meters"
+                  />
+                  
+                  <ParameterSlider
+                    label="Impact Velocity"
+                    value={asteroidData.velocity}
+                    min={5}
+                    max={50}
+                    step={1}
+                    unit=" km/s"
+                    onChange={(value) => setAsteroidData({...asteroidData, velocity: value})}
+                    description="Speed at which the asteroid impacts Earth"
+                  />
+                  
+                  <ParameterSlider
+                    label="Impact Angle"
+                    value={asteroidData.angle}
+                    min={0}
+                    max={90}
+                    step={1}
+                    unit="°"
+                    onChange={(value) => setAsteroidData({...asteroidData, angle: value})}
+                    description="Angle of impact relative to Earth's surface"
+                  />
 
                 <FormControl fullWidth sx={{ mt: 2, mb: 3 }}>
                   <InputLabel>Composition</InputLabel>
@@ -200,27 +229,27 @@ export default function SimulationPage() {
                   </Select>
                 </FormControl>
                 
-                <Button
-                  fullWidth
-                  variant="contained"
-                  size="large"
-                  startIcon={<PlayArrow />}
-                  onClick={runSimulation}
-                  sx={{ py: 1.5 }}
-                  disabled={loading}
-                  suppressHydrationWarning
-                >
-                  {loading ? 'Simulating…' : 'Run Simulation'}
-                </Button>
+              <Button
+                fullWidth
+                variant="contained"
+                size="large"
+                startIcon={<PlayArrow />}
+                onClick={runSimulation}
+                sx={{ py: 1.5, mt: 'auto' }}
+                disabled={loading}
+                suppressHydrationWarning
+              >
+                {loading ? 'Simulating…' : 'Run Simulation'}
+              </Button>
               </Box>
             </CardContent>
           </Card>
         </Grid>
         
-        {/* Visualization Panel */}
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <Card sx={{ height: { xs: 500, lg: 700 } }}>
-            <CardContent sx={{ p: 4, height: '100%' }}>
+        {/* Visualization Panel - Center Column (Largest) */}
+        <Grid size={{ xs: 12, xl: 6 }}>
+          <Card sx={{ height: { xs: 500, xl: 700 } }}>
+            <CardContent sx={{ p: 3, height: '100%', overflow: 'hidden' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h5">
                   Impact Visualization
@@ -291,164 +320,155 @@ export default function SimulationPage() {
             </CardContent>
           </Card>
         </Grid>
+        
+        {/* Results Panel - Right Column */}
+        <Grid size={{ xs: 12, xl: 3 }}>
+          <Card sx={{ height: { xs: 'auto', xl: 700 }, display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ p: 3, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+                Impact Results
+              </Typography>
+              
+              {/* Quick Results Cards */}
+              <Box sx={{ 
+                flex: 1, 
+                overflow: 'auto', 
+                pr: 0.5,
+                '&::-webkit-scrollbar': {
+                  width: '6px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: 'transparent',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                  borderRadius: '3px',
+                  '&:hover': {
+                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
+                  },
+                },
+                scrollbarWidth: 'thin',
+                scrollbarColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2) transparent' : 'rgba(0, 0, 0, 0.2) transparent',
+              }}>
+              <Grid container spacing={2} sx={{ mb: 3 }}>
+                <Grid size={12}>
+                  <Card variant="outlined">
+                    <CardContent sx={{ textAlign: 'center', p: 2 }}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Impact Energy
+                      </Typography>
+                      <Typography variant="h6" sx={{ color: 'error.main', fontWeight: 'bold' }}>
+                        {results.energy} MT TNT
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid size={12}>
+                  <Card variant="outlined">
+                    <CardContent sx={{ textAlign: 'center', p: 2 }}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Crater Diameter
+                      </Typography>
+                      <Typography variant="h6" sx={{ color: 'warning.main', fontWeight: 'bold' }}>
+                        {results.craterDiameter} km
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid size={12}>
+                  <Card variant="outlined">
+                    <CardContent sx={{ textAlign: 'center', p: 2 }}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Affected Area
+                      </Typography>
+                      <Typography variant="h6" sx={{ color: 'info.main', fontWeight: 'bold' }}>
+                        {results.affectedArea} km²
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+              
+              {/* Detailed Impact Statistics from API */}
+              {detailedStats && (
+                <Box sx={{ mt: 2, mb: 2 }}>
+                  {/* Crater Statistics */}
+                  {detailedStats.crater && detailedStats.crater.length > 0 && (
+                    <Box sx={{ mb: 2, p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#1e3a8a' }}>
+                        💥 Crater
+                      </Typography>
+                      {detailedStats.crater.map((stat, idx) => (
+                        <Typography key={idx} variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', lineHeight: 1.5, ml: 1 }}>
+                          • {stat}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+                  
+                  {/* Shockwave Statistics */}
+                  {detailedStats.shockwave && detailedStats.shockwave.length > 0 && (
+                    <Box sx={{ mb: 2, p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#dc2626' }}>
+                        💨 Shock Wave
+                      </Typography>
+                      {detailedStats.shockwave.map((stat, idx) => (
+                        <Typography key={idx} variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', lineHeight: 1.5, ml: 1 }}>
+                          • {stat}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+                  
+                  {/* Wind Blast Statistics */}
+                  {detailedStats.windBlast && detailedStats.windBlast.length > 0 && (
+                    <Box sx={{ mb: 2, p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#f97316' }}>
+                        🌪️ Wind Blast
+                      </Typography>
+                      {detailedStats.windBlast.map((stat, idx) => (
+                        <Typography key={idx} variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', lineHeight: 1.5, ml: 1 }}>
+                          • {stat}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+                  
+                  {/* Seismic Statistics */}
+                  {detailedStats.seismic && detailedStats.seismic.length > 0 && (
+                    <Box sx={{ mb: 2, p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#8b5cf6' }}>
+                        🌍 Seismic Effects
+                      </Typography>
+                      {detailedStats.seismic.map((stat, idx) => (
+                        <Typography key={idx} variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem', lineHeight: 1.5, ml: 1 }}>
+                          • {stat}
+                        </Typography>
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+              )}
+              
+              {/* Generic Impact Information (shown when no detailed stats) */}
+              {!detailedStats && (
+                <Box sx={{ mt: 'auto', p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary" paragraph>
+                    <strong>Impact Assessment:</strong>
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', lineHeight: 1.4 }}>
+                    • Atmospheric heating and fires{'\n'}
+                    • Debris ejection and fallout{'\n'}
+                    • Seismic activity potential{'\n'}
+                    • Infrastructure damage zones
+                  </Typography>
+                </Box>
+              )}
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
-      
-      {/* Results Panel */}
-      <Grid container spacing={3} sx={{ mt: 4 }}>
-        <Grid size={{ xs: 12, md: 6, lg: 2.4 }}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center', p: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ fontSize: '0.95rem' }}>
-                Impact Energy
-              </Typography>
-              <Typography variant="h4" sx={{ color: 'error.main', fontWeight: 'bold' }}>
-                {results.energy}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                MT TNT
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, md: 6, lg: 2.4 }}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center', p: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ fontSize: '0.95rem' }}>
-                Crater Size
-              </Typography>
-              <Typography variant="h4" sx={{ color: 'warning.main', fontWeight: 'bold' }}>
-                {results.craterDiameter}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                km diameter
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                {results.craterDepth} km deep
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, md: 6, lg: 2.4 }}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center', p: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ fontSize: '0.95rem' }}>
-                Seismic Effects
-              </Typography>
-              <Typography variant="h4" sx={{ color: 'secondary.main', fontWeight: 'bold' }}>
-                {results.seismicMagnitude}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Magnitude
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, md: 6, lg: 2.4 }}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center', p: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ fontSize: '0.95rem' }}>
-                Peak Wind Speed
-              </Typography>
-              <Typography variant="h4" sx={{ color: 'error.dark', fontWeight: 'bold' }}>
-                {results.windSpeed}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                mph
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, md: 6, lg: 2.4 }}>
-          <Card>
-            <CardContent sx={{ textAlign: 'center', p: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ fontSize: '0.95rem' }}>
-                Affected Area
-              </Typography>
-              <Typography variant="h4" sx={{ color: 'info.main', fontWeight: 'bold' }}>
-                {results.affectedArea}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                km²
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-      
-      {/* Detailed Statistics Panel (shown when detailed stats are available) */}
-      {detailedStats && (
-        <Grid container spacing={3} sx={{ mt: 4 }}>
-          <Grid size={{ xs: 12 }}>
-            <Typography variant="h4" gutterBottom sx={{ textAlign: 'center', mb: 3 }}>
-              Detailed Impact Analysis
-            </Typography>
-          </Grid>
-          
-          {/* Crater Effects */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Card>
-              <CardContent sx={{ p: 3 }}>
-                <Typography variant="h5" gutterBottom sx={{ color: 'primary.main', mb: 2 }}>
-                  🌑 Crater Effects
-                </Typography>
-                {detailedStats.crater.map((stat, idx) => (
-                  <Typography key={idx} variant="body1" sx={{ mb: 1, lineHeight: 1.7 }}>
-                    • {stat}
-                  </Typography>
-                ))}
-              </CardContent>
-            </Card>
-          </Grid>
-          
-          {/* Shock Wave Effects */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Card>
-              <CardContent sx={{ p: 3 }}>
-                <Typography variant="h5" gutterBottom sx={{ color: 'error.main', mb: 2 }}>
-                  💥 Shock Wave Effects
-                </Typography>
-                {detailedStats.shockwave.map((stat, idx) => (
-                  <Typography key={idx} variant="body1" sx={{ mb: 1, lineHeight: 1.7 }}>
-                    • {stat}
-                  </Typography>
-                ))}
-              </CardContent>
-            </Card>
-          </Grid>
-          
-          {/* Wind Blast Effects */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Card>
-              <CardContent sx={{ p: 3 }}>
-                <Typography variant="h5" gutterBottom sx={{ color: 'warning.main', mb: 2 }}>
-                  🌪️ Wind Blast Effects
-                </Typography>
-                {detailedStats.windBlast.map((stat, idx) => (
-                  <Typography key={idx} variant="body1" sx={{ mb: 1, lineHeight: 1.7 }}>
-                    • {stat}
-                  </Typography>
-                ))}
-              </CardContent>
-            </Card>
-          </Grid>
-          
-          {/* Seismic Effects */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Card>
-              <CardContent sx={{ p: 3 }}>
-                <Typography variant="h5" gutterBottom sx={{ color: 'secondary.main', mb: 2 }}>
-                  🌍 Seismic Effects
-                </Typography>
-                {detailedStats.seismic.map((stat, idx) => (
-                  <Typography key={idx} variant="body1" sx={{ mb: 1, lineHeight: 1.7 }}>
-                    • {stat}
-                  </Typography>
-                ))}
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      )}
-    </Container>
+    </Box>
   );
 }
