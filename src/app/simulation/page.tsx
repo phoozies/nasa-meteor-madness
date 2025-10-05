@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Container,
@@ -18,10 +18,10 @@ import { PlayArrow } from '@mui/icons-material';
 import ParameterSlider from '@/components/ui/ParameterSlider';
 import Globe from '../../components/simulation/globe';
 import MeteorSimulation from '@/components/simulation/MeteorSimulation';
-import type { Viewer, Cartesian3, Entity } from 'cesium';
+import type { Viewer, Entity } from 'cesium';
 
 export default function SimulationPage() {
-  const [asteroidData, setAsteroidData] = useState({
+  const [asteroidData, setAsteroidData] = useState<{ size: number; velocity: number; angle: number; composition: 'rocky' | 'metallic' | 'icy' }>({
     size: 100,
     velocity: 20,
     angle: 45,
@@ -36,29 +36,33 @@ export default function SimulationPage() {
 
   const [viewerRef, setViewerRef] = useState<Viewer | null>(null);
   const [clickTarget, setClickTarget] = useState<{ lon: number; lat: number; height: number } | null>(null);
-  const [markerEntity, setMarkerEntity] = useState<Entity | null>(null);
+  const markerRef = useRef<Entity | null>(null);
   const [runSim, setRunSim] = useState(false);
 
   // Add marker when clickTarget changes
   useEffect(() => {
     if (!viewerRef) return;
 
+    // capture viewerRef to avoid it becoming undefined during async operations
+    const v = viewerRef;
+
     // Remove previous marker
-    if (markerEntity) {
-      viewerRef.entities.remove(markerEntity);
-      setMarkerEntity(null);
+    if (markerRef.current) {
+      try { v.entities.remove(markerRef.current); } catch { /* ignore */ }
+      markerRef.current = null;
     }
 
     if (!clickTarget) return;
 
     const addMarker = async () => {
       const Cesium = await import('cesium');
-      const entity = viewerRef.entities.add({
+      if (!v) return;
+      const entity = v.entities.add({
         name: 'Target Marker',
         position: Cesium.Cartesian3.fromDegrees(clickTarget.lon, clickTarget.lat, clickTarget.height),
         point: { pixelSize: 10, color: Cesium.Color.RED, outlineColor: Cesium.Color.WHITE, outlineWidth: 2 },
       });
-      setMarkerEntity(entity);
+      markerRef.current = entity;
     };
 
     addMarker();
@@ -71,9 +75,9 @@ export default function SimulationPage() {
     }
 
     // Remove marker after launching
-    if (markerEntity && viewerRef) {
-      viewerRef.entities.remove(markerEntity);
-      setMarkerEntity(null);
+    if (markerRef.current && viewerRef) {
+      try { viewerRef.entities.remove(markerRef.current); } catch { /* ignore */ }
+      markerRef.current = null;
     }
 
     // Run impact calculations
@@ -146,7 +150,7 @@ export default function SimulationPage() {
                   <Select
                     value={asteroidData.composition}
                     label="Composition"
-                    onChange={(e) => setAsteroidData({ ...asteroidData, composition: e.target.value })}
+                    onChange={(e) => setAsteroidData({ ...asteroidData, composition: e.target.value as 'rocky' | 'metallic' | 'icy' })}
                   >
                     <MenuItem value="rocky">Rocky</MenuItem>
                     <MenuItem value="metallic">Metallic</MenuItem>
@@ -161,6 +165,7 @@ export default function SimulationPage() {
                   startIcon={<PlayArrow />}
                   onClick={handleRunSimulation}
                   sx={{ py: 1.5 }}
+                  suppressHydrationWarning
                 >
                   Run Simulation
                 </Button>
@@ -192,7 +197,7 @@ export default function SimulationPage() {
                   onClick={(pos) => setClickTarget(pos)}
                 />
                 {runSim && viewerRef && clickTarget && (
-                  <MeteorSimulation viewer={viewerRef} params={asteroidData} target={clickTarget} />
+                  <MeteorSimulation viewer={viewerRef} params={asteroidData} target={clickTarget} start={runSim} />
                 )}
               </Box>
             </CardContent>
