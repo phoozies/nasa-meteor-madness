@@ -29,31 +29,49 @@ import {
 import ParameterSlider from '@/components/ui/ParameterSlider';
 
 type StrategyKey = 'kinetic' | 'gravity' | 'laser' | 'nuclear';
+type SizeKey = 'big' | 'small';
+
 
 export default function MitigationPage() {
   const theme = useTheme();
   const [selectedStrategy, setSelectedStrategy] = useState<StrategyKey>('kinetic');
+  const [selectedSize, setSelectedSize] = useState<SizeKey>('big');
   const [scenario, setScenario] = useState({
     asteroidSize: 200,
     timeToImpact: 365, // days
   });
 
+  const size = {
+    small: {
+      name: 'Simple Asteroid',
+      description: 'A small asteroid, it would do some damage it reaches us, but we have a number of stragies to counter this!',
+      details: ['Diameter: 100 meters', 'Composition: Rocky','Warning time: 10 years (we got lucky)'],
+    },
+    big: {
+      name: 'Complex Asteroid',
+      description: 'A larger asteroid, this would cause significant damage if it were to reach us, must be prevented by any means.',
+      details: ['Diameter: 2.5 kilometers', 'Composition: Metallic', 'Warning time: 25 years'],
+    },
+  }
+
   const strategies = {
     kinetic: {
       name: 'Kinetic Impactor',
-      description: 'High-speed spacecraft collision to alter asteroid trajectory',
+      description: 'High-speed high-mass spacecraft collision to alter asteroid trajectory',
       pros: ['Proven technology', 'Relatively simple', 'Cost-effective'],
       cons: ['May fragment asteroid', 'Requires precise targeting', 'Limited effectiveness for large objects'],
-      successRate: 75,
+      successRate: 40,
+      successRate2: 75,
       icon: <Science sx={{ fontSize: 40 }} />,
       color: 'primary'
     },
     gravity: {
       name: 'Gravity Tractor',
-      description: 'Spacecraft uses gravitational pull to slowly deflect asteroid',
+      description: 'Spacecraft uses its own gravitational pull to slowly deflect asteroid',
       pros: ['Gentle deflection', 'No fragmentation risk', 'Highly controllable'],
-      cons: ['Very slow process', 'Requires long lead time', 'High fuel requirements'],
-      successRate: 90,
+      cons: ['Very slow process', 'Requires long lead time', 'Limited effectiveness for large objects'],
+      successRate: 0,
+      successRate2: 20,
       icon: <RadioButtonUnchecked sx={{ fontSize: 40 }} />,
       color: 'success'
     },
@@ -61,8 +79,9 @@ export default function MitigationPage() {
       name: 'Laser Ablation',
       description: 'Focused laser beam vaporizes surface material for propulsion',
       pros: ['Precise control', 'No spacecraft contact', 'Scalable power'],
-      cons: ['Technology in development', 'Power requirements', 'Atmospheric interference'],
-      successRate: 60,
+      cons: ['Technology in development', 'Very high power requirements', 'Atmospheric interference'],
+      successRate: 0,
+      successRate2: 7.5,
       icon: <FlashOn sx={{ fontSize: 40 }} />,
       color: 'warning'
     },
@@ -71,7 +90,8 @@ export default function MitigationPage() {
       description: 'Nuclear device detonated near asteroid to alter trajectory',
       pros: ['Extremely powerful', 'Effective for large objects', 'Rapid deflection'],
       cons: ['Fragmentation risk', 'Political challenges', 'Fallout concerns'],
-      successRate: 85,
+      successRate: 75,
+      successRate2: 95,
       icon: <RadioButtonUnchecked sx={{ fontSize: 40 }} />,
       color: 'error'
     }
@@ -79,9 +99,67 @@ export default function MitigationPage() {
 
   return (
     <Box sx={{ px: 4, py: 4, backgroundColor: theme.palette.background.default }}>
-      <Typography variant="h3" component="h1" textAlign="center" gutterBottom>
+            <Typography variant="h3" component="h1" textAlign="center" gutterBottom>
         Asteroid Deflection Strategies
       </Typography>
+      
+    {/* Asteroid Size */}
+    <Box sx={{ mb: 6 }}>
+      <Typography variant="h4" gutterBottom sx={{ mb: 3, textAlign: 'center' }}>
+        Choose Asteroid Size
+      </Typography>
+
+      <Grid
+        container
+        spacing={0} // removes all grid gaps
+        justifyContent="center"
+      >
+        {Object.entries(size).map(([key, size]) => {
+          const sizeKey = key as SizeKey;
+          return (
+            <Grid
+              key={key}
+              size={{ xs: 12, sm: 6, lg: 3 }}
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                p: 0, // remove internal padding
+              }}
+            >
+              <Card
+                sx={{
+                  width: 350,
+                  cursor: 'pointer',
+                  border: selectedSize === sizeKey ? '2px solid' : '1px solid',
+                  borderColor:
+                    selectedSize === sizeKey ? 'primary.main' : 'divider',
+                  backgroundColor:
+                    selectedSize === sizeKey
+                      ? 'primary.dark' + '10'
+                      : 'background.paper',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: 4,
+                  },
+                }}
+                onClick={() => setSelectedSize(sizeKey)}
+              >
+                <CardContent sx={{ textAlign: 'center', p: 3 }}>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    {size.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" paragraph>
+                    {size.description}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          );
+        })}
+      </Grid>
+    </Box>
+
       
       {/* Strategy Selection */}
       <Box sx={{ mb: 6 }}>
@@ -122,10 +200,19 @@ export default function MitigationPage() {
                       {strategy.description}
                     </Typography>
                     <Chip
-                      label={`${strategy.successRate}% Success Rate`}
-                      color={strategy.successRate > 80 ? 'success' : strategy.successRate > 60 ? 'warning' : 'error'}
+                      label={`${
+                        selectedSize === 'small' ? strategy.successRate2 : strategy.successRate
+                      }% Success Rate`}
+                      color={
+                        (selectedSize === 'small' ? strategy.successRate2 : strategy.successRate) > 80
+                          ? 'success'
+                          : (selectedSize === 'small' ? strategy.successRate2 : strategy.successRate) > 60
+                          ? 'warning'
+                          : 'error'
+                      }
                       size="small"
                     />
+
                   </CardContent>
                 </Card>
               </Grid>
@@ -135,77 +222,27 @@ export default function MitigationPage() {
       </Box>
       
       <Grid container spacing={4}>
-        {/* Mission Parameters */}
-        <Grid size={{ xs: 12, xl: 4 }}>
-          <Card>
-            <CardContent sx={{ p: 4 }}>
-              <Typography variant="h5" gutterBottom>
-                Mission Parameters
-              </Typography>
-              
-              <Box sx={{ mt: 3 }}>
-                <ParameterSlider
-                  label="Asteroid Size"
-                  value={scenario.asteroidSize}
-                  min={50}
-                  max={1000}
-                  step={10}
-                  unit=" m"
-                  onChange={(value) => setScenario({...scenario, asteroidSize: value})}
-                  description="Diameter of the asteroid in meters"
-                />
-                
-                <ParameterSlider
-                  label="Time to Impact"
-                  value={scenario.timeToImpact}
-                  min={30}
-                  max={3650}
-                  step={1}
-                  unit=" days"
-                  onChange={(value) => setScenario({...scenario, timeToImpact: value})}
-                  description="Time remaining before potential impact"
-                />
-              </Box>
-              
-              <Paper sx={{ p: 3, mt: 3, backgroundColor: 'background.default' }}>
-                <Typography variant="h6" gutterBottom>
-                  Mission Feasibility
-                </Typography>
-                <Stack spacing={2}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2">Success Rate:</Typography>
-                    <Typography variant="body2" color="success.main" sx={{ fontWeight: 'bold' }}>
-                      {strategies[selectedStrategy].successRate}%
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2">Est. Cost:</Typography>
-                    <Typography variant="body2" color="info.main" sx={{ fontWeight: 'bold' }}>
-                      $2.5B
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2">Mission Duration:</Typography>
-                    <Typography variant="body2" color="warning.main" sx={{ fontWeight: 'bold' }}>
-                      18 months
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Paper>
-              
-              <Button
-                fullWidth
-                variant="contained"
-                color="success"
-                size="large"
-                startIcon={<Launch />}
-                sx={{ mt: 3, py: 1.5 }}
-              >
-                Launch Mission Simulation
-              </Button>
-            </CardContent>
-          </Card>
-        </Grid>
+      {/* Asteroid Details */}
+      <Grid size={{ xs: 12, xl: 4 }}>
+        <Card>
+          <CardContent sx={{ p: 4, height: '100%' }}>
+            <Typography variant="h5" gutterBottom>
+              {size[selectedSize].name}
+            </Typography>
+            <Grid container spacing={4}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <List dense sx={{ listStyleType: 'disc', pl: 2 }}>
+                  {size[selectedSize].details.map((detail, index) => (
+                    <ListItem key={index} sx={{ display: 'list-item', px: 0 }}>
+                      <ListItemText primary={detail} />
+                    </ListItem>
+                  ))}
+                </List>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+      </Grid>
         
         {/* Strategy Details */}
         <Grid size={{ xs: 12, xl: 8 }}>
@@ -256,30 +293,6 @@ export default function MitigationPage() {
               </CardContent>
             </Card>
             
-            {/* Mission Timeline */}
-            <Card>
-              <CardContent sx={{ p: 4 }}>
-                <Typography variant="h5" gutterBottom>
-                  Mission Timeline
-                </Typography>
-                <Box
-                  sx={{
-                    height: 250,
-                    backgroundColor: theme.palette.background.paper,
-                    borderRadius: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: `1px solid ${theme.palette.divider}`,
-                  }}
-                >
-                  <Typography color="text.secondary">
-                    Mission timeline visualization will be rendered here
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
-            
             {/* Success Probability */}
             <Card>
               <CardContent sx={{ p: 4 }}>
@@ -297,13 +310,16 @@ export default function MitigationPage() {
                       }}
                     >
                       <Typography variant="h3" color="success.main" sx={{ fontWeight: 'bold' }}>
-                        {strategies[selectedStrategy].successRate}%
+                        {selectedSize === 'small' 
+                          ? strategies[selectedStrategy].successRate2 
+                          : strategies[selectedStrategy].successRate}%
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Success
                       </Typography>
                     </Paper>
                   </Grid>
+
                   <Grid size={{ xs: 12, sm: 4 }}>
                     <Paper
                       sx={{
@@ -314,13 +330,18 @@ export default function MitigationPage() {
                       }}
                     >
                       <Typography variant="h3" color="warning.main" sx={{ fontWeight: 'bold' }}>
-                        {Math.round((100 - strategies[selectedStrategy].successRate) * 0.7)}%
+                        {Math.round(
+                          (100 - (selectedSize === 'small' 
+                                    ? strategies[selectedStrategy].successRate2 
+                                    : strategies[selectedStrategy].successRate)) * 0.7
+                        )}%
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Partial Success
                       </Typography>
                     </Paper>
                   </Grid>
+
                   <Grid size={{ xs: 12, sm: 4 }}>
                     <Paper
                       sx={{
@@ -331,7 +352,11 @@ export default function MitigationPage() {
                       }}
                     >
                       <Typography variant="h3" color="error.main" sx={{ fontWeight: 'bold' }}>
-                        {Math.round((100 - strategies[selectedStrategy].successRate) * 0.3)}%
+                        {Math.round(
+                          (100 - (selectedSize === 'small' 
+                                    ? strategies[selectedStrategy].successRate2 
+                                    : strategies[selectedStrategy].successRate)) * 0.3
+                        )}%
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Failure
@@ -341,6 +366,7 @@ export default function MitigationPage() {
                 </Grid>
               </CardContent>
             </Card>
+
           </Stack>
         </Grid>
       </Grid>
