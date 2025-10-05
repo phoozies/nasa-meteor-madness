@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -62,7 +61,7 @@ export default function VisualizationPage() {
   ];
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Box sx={{ px: 4, py: 4, backgroundColor: theme.palette.background.default }}>
       <Typography variant="h3" component="h1" textAlign="center" gutterBottom>
         Data Visualization Dashboard
       </Typography>
@@ -266,6 +265,6 @@ export default function VisualizationPage() {
           </Stack>
         </Grid>
       </Grid>
-    </Container>
+    </Box>
   );
 }

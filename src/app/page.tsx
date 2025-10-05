@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import {
   Box,
-  Container,
   Typography,
   Button,
   Stack,
@@ -23,9 +22,10 @@ export default function Home() {
       height: '100vh',
       display: 'flex',
       alignItems: 'center',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      px: 4, // 2rem padding on sides
     }}>
-        <Container maxWidth="lg">
+        <Box sx={{ width: '100%' }}>
           <Box textAlign="center">
             <Typography
               variant="h1"
@@ -93,7 +93,7 @@ export default function Home() {
               </Button>
             </Stack>
           </Box>
-        </Container>
+        </Box>
     </Box>
   );
 }
