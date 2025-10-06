@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
@@ -101,7 +102,7 @@ export default function Globe({
       if (viewer) viewer.destroy();
       setViewer(null);
     };
-  }, [onClick, onViewerReady]);
+  }, []);
 
   return (
     <div
