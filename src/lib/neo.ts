@@ -35,6 +35,16 @@ export type Neo = {
   is_hazardous?: boolean;
 };
 
+// Interface for the asteroid data from the API response
+interface ApiAsteroid {
+  id: string;
+  name: string;
+  size: number;
+  date: string;
+  velocity: number;
+  isPotentiallyHazardous: boolean;
+}
+
 /**
  * Fetch NEOs from NASA API via our proxy endpoint
  * If no dates provided, API defaults to last 3 days
@@ -63,7 +73,7 @@ export async function fetchNeoFeed(
     // Handle the new API format: { success, count, asteroids, dateRange }
     if (data.asteroids && Array.isArray(data.asteroids)) {
       // Convert the new format to our Neo format
-      return data.asteroids.map((asteroid: any) => ({
+      return data.asteroids.map((asteroid: ApiAsteroid) => ({
         id: asteroid.id,
         name: asteroid.name.replace(/[()]/g, ''), // Clean up name
         diameter_m: asteroid.size, // Already in meters

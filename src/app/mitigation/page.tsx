@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { useState } from 'react';
@@ -8,7 +9,6 @@ import {
   Card,
   CardContent,
   Grid,
-  Button,
   Paper,
   Stack,
   Chip,
@@ -16,17 +16,14 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  useTheme,
 } from '@mui/material';
 import {
   CheckCircle,
   Warning,
-  Launch,
   Science,
   FlashOn,
   RadioButtonUnchecked,
 } from '@mui/icons-material';
-import ParameterSlider from '@/components/ui/ParameterSlider';
 import '@fontsource/orbitron/700.css';
 
 type StrategyKey = 'kinetic' | 'gravity' | 'laser' | 'nuclear';
@@ -34,7 +31,6 @@ type SizeKey = 'big' | 'small';
 
 
 export default function MitigationPage() {
-  const theme = useTheme();
   const [selectedStrategy, setSelectedStrategy] = useState<StrategyKey>('kinetic');
   const [selectedSize, setSelectedSize] = useState<SizeKey>('big');
   const [scenario, setScenario] = useState({

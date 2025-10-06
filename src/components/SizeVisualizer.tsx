@@ -12,8 +12,6 @@ import {
   TextField,
   Button,
   Chip,
-  FormGroup,
-  FormControlLabel,
   Checkbox,
   Typography,
   Alert,

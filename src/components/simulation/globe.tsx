@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -99,7 +101,7 @@ export default function Globe({
       if (viewer) viewer.destroy();
       setViewer(null);
     };
-  }, []);
+  }, [onClick, onViewerReady]);
 
   return (
     <div
